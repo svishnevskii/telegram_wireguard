@@ -146,7 +146,7 @@ async def Work_with_Message(m: types.Message):
     Butt_skip = types.ReplyKeyboardMarkup(resize_keyboard=True)
     Butt_skip.add(types.KeyboardButton(e.emojize(f"Пропустить :next_track_button:")))
     await bot.send_message(m.from_user.id, "Введите сколько часов хотите добавить:", reply_markup=Butt_skip)
-    
+
 @bot.message_handler(state=MyStates.UserAddTimeHours, content_types=["text"])
 async def Work_with_Message(m: types.Message):
     if e.demojize(m.text) == "Пропустить :next_track_button:":
@@ -655,13 +655,6 @@ def checkTime():
                     db.commit()
                     BotChecking = TeleBot(BOTAPIKEY)
                     BotChecking.send_message(i['tgid'],texts_for_bot["alert_to_renew_sub"],parse_mode="HTML")
-
-
-
-
-
-
-
 
         except Exception as err:
             print(err)
