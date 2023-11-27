@@ -147,7 +147,7 @@ function installWireGuard() {
 \"UTC_time\": 3,
 \"tg_token\": \"${API_TOKEN_BOT}\",
 \"tg_shop_token\": \"${API_PAYMENT_BOT}\"
-}" >"$(pwd)/ObiVpn-master/config.json"
+}" >"$(pwd)/telegram_wireguard-master/config.json"
 			chmod 744 -R $(pwd)/telegram_wireguard-master/
 			echo "[Unit]
 Description=Admin Bot for Wireguard
