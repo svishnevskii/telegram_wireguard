@@ -143,7 +143,7 @@ function installWireGuard() {
 			echo "{
 \"admin_tg_id\": ${ADMIN_ID_BOT},
 \"one_month_cost\": 120,
-\"trial_period\": 2700,
+\"trial_period\": 1728000,
 \"UTC_time\": 3,
 \"tg_token\": \"${API_TOKEN_BOT}\",
 \"tg_shop_token\": \"${API_PAYMENT_BOT}\"
@@ -162,9 +162,9 @@ ExecStart=/usr/bin/python3 $(pwd)/telegram_wireguard-master/main.py
 User=root
 
 [Install]
-WantedBy=multi-user.target">"/etc/systemd/system/AdminBotXAKEP.service"
+WantedBy=multi-user.target">"/etc/systemd/system/befuture_admin.service"
 			systemctl daemon-reload
-			sudo systemctl enable AdminBotXAKEP.service
+			sudo systemctl enable befuture_admin.service
 			clear
 			echo "Installed Bot"
 		fi
@@ -256,7 +256,7 @@ net.ipv6.conf.all.forwarding = 1" >/etc/sysctl.d/wg.conf
 	clear
 	echo "Wireguard Installed!!!"
 	if [[ ${BOT_AUTO_INSTALL} == '1' ]]; then
-		sudo systemctl start AdminBotXAKEP.service
+		sudo systemctl start befuture_admin.service
 	fi
 	# WireGuard might not work if we updated the kernel. Tell the user to reboot
 	if [[ ${WG_RUNNING} -ne 0 ]]; then
