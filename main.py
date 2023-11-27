@@ -412,9 +412,9 @@ async def Work_with_Message(m: types.Message):
         if user_dat.trial_subscription == False:
             Butt_how_to = types.InlineKeyboardMarkup()
             Butt_how_to.add(
-                types.InlineKeyboardButton(e.emojize("Инструкция для iPhone"), url="https://telegra.ph/Gajd-na-ustanovku-WireGuard-01-16"))
-            Butt_how_to.add(
-                types.InlineKeyboardButton(e.emojize("Инструкция для Android"), url="https://telegra.ph/Gajd-na-ustanovku-WireGuard-Android-01-16"))
+                types.InlineKeyboardButton(e.emojize("Инструкция настройки"), url="https://telegra.ph/Gajd-na-ustanovku-11-27"))
+            # Butt_how_to.add(
+            #     types.InlineKeyboardButton(e.emojize("Инструкция для Android"), url="https://telegra.ph/Gajd-na-ustanovku-WireGuard-Android-01-16"))
             Butt_how_to.add(
                 types.InlineKeyboardButton(e.emojize("Проверить VPN"),
                                            url="https://2ip.ru/"))
