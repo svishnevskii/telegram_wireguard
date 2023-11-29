@@ -6,7 +6,7 @@ NC='\033[0m'
 
 function isRoot() {
 	if [ "${EUID}" -ne 0 ]; then
-		echo "Neobhodimo zapustit' skript ot root pol'zovatelya!!!"
+		echo "Start it as root user!!!"
 		exit 1
 	fi
 }
@@ -65,7 +65,7 @@ function initialCheck() {
 function installQuestions() {
 	echo "Dobro pozhalovat' v ustanovshchik WireGuard!"
 	echo ""
-	
+
 
 	# Detect public IPv4 or IPv6 address and pre-fill for the user
 	SERVER_PUB_IP=$(ip -4 addr | sed -ne 's|^.* inet \([^/]*\)/.* scope global.*$|\1|p' | awk '{print $1}' | head -1)
@@ -82,7 +82,7 @@ function installQuestions() {
 	done
 
 	until [[ ${SERVER_WG_NIC} =~ ^[a-zA-Z0-9_]+$ && ${#SERVER_WG_NIC} -lt 16 ]]; do
-		#read -rp "WireGuard interface name: " -e -i wg0 
+		#read -rp "WireGuard interface name: " -e -i wg0
 		SERVER_WG_NIC="wg0"
 	done
 
@@ -113,15 +113,15 @@ function installQuestions() {
 		fi
 	done
 	read -rp "Hotite li ustanovit' srazu Telegram bota(1 - Da, 0 - Net): " -e -i "1" BOT_AUTO_INSTALL
-	
+
 	if [[ ${BOT_AUTO_INSTALL} == '1' ]]; then
-		read -rp "Vvedite API-klyuch ot vashego Telegram bota: " -e API_TOKEN_BOT
-		read -rp "Vvedite klyuch ot vashej platezhnoj sistemy(Esli ostavit' pustym, to pol'zovateli ne smogut proizvesti onlajn oplatu): " -e API_PAYMENT_BOT
-		read -rp "Vvedite Telegram-id administratora: " -e ADMIN_ID_BOT
+		read -rp "Telegram API: " -e API_TOKEN_BOT
+		read -rp "YCassa API: " -e API_PAYMENT_BOT
+		read -rp "Telegram-id Admin: " -e ADMIN_ID_BOT
 	fi
 	echo ""
-	echo "Otlichno vse osnovnye danny vvedeny!"
-	read -n1 -r -p "Press any key..."
+	echo "Ok!"
+	read -n1 -r -p "Press any key to continue..."
 }
 
 function installWireGuard() {
