@@ -144,8 +144,8 @@ function installWireGuard() {
 			pip install -r "$(pwd)/telegram_wireguard-master/requirements.txt"
 			echo "{
 \"admin_tg_id\": ${ADMIN_ID_BOT},
-\"one_month_cost\": 120,
-\"trial_period\": 1728000,
+\"one_month_cost\": 70,
+\"trial_period\": 86400,
 \"UTC_time\": 3,
 \"tg_token\": \"${API_TOKEN_BOT}\",
 \"tg_shop_token\": \"${API_PAYMENT_BOT}\"
