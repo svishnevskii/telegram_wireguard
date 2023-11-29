@@ -1,7 +1,7 @@
 {
   "hello_message": "<b>Почему стоит выбрать Befuture VPN?</b>\n\n1. Мы шифруем весь трафик клиентов \uD83D\uDD10\n2. Мы не сохраняем ваши конфиденциальные данные, в отличие от бесплатных VPN-сервисов ❌\n3. Отличная скорость и нет ограничений по трафику \uD83C\uDFCE",
   "trial_message": "Чтобы вы смогли оценить наш VPN, даем вам бесплатный доступ на 20 дней!\n\nКак пользоваться VPN и другие ответы, находятся в разделе \"Как подключить :gear:\"",
-  "how_to_connect_info": "Ваш конфиг (файл настроек) для подключения к VPN\n\nСсылки на приложение:\n <a href='https://apps.apple.com/us/app/wireguard/id1441195209'>iPhone</a>\n<a href='https://play.google.com/store/apps/details?id=com.wireguard.android'>Android</a>",
+  "how_to_connect_info": "1) Скачайте файл настроек к VPN\n\n2) Установите VPN: <a href='https://apps.apple.com/us/app/wireguard/id1441195209'>iPhone</a> <a href='https://play.google.com/store/apps/details?id=com.wireguard.android'>Android</a> \n\n3) Откройте VPN и загрузите файл настроек",
   "success_pay_message": "Оплата прошла успешно!\nПодписка продлена, спасибо что выбираете нас.",
   "ended_sub_message": "Ваша подписка закончилась!\n\nЕсли хотите продолжить пользоваться нашими услугами, пожалуйста продлите подписку.",
   "alert_to_renew_sub": "До конца действия подписки осталось меньше дня, пора продлить ее!"
