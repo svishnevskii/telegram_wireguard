@@ -80,7 +80,7 @@ class User:
     async def Adduser(self,username,full_name):
         if self.registered == False:
             db = await aiosqlite.connect(DBCONNECT)
-            await db.execute(f"INSERT INTO userss (tgid,subscription,username,fullname) values (?,?,?,?)", (self.tgid,str(int(time.time())+int(CONFIG['trial_period'])),str(username),str(full_name)))
+            await db.execute(f"INSERT INTO userss (tgid,subscription,username,fullname) values (?,?,?,?)", (self.tgid,str(int(time.time())+int(CONFIG['trial_period']) * 86400),str(username),str(full_name)))
             await db.commit()
             check=subprocess.call(f'./addusertovpn.sh {str(self.tgid)}',shell=True)
             #print(check)
