@@ -344,26 +344,14 @@ async def Work_with_Message(m: types.Message):
             users = await user_dat.GetAllUsersWithoutSub()
             all_time = 0
             count = 0
-            BotChecking = TeleBot(BOTAPIKEY)
             for user in users:
-                time.sleep(5)
                 count += 1
-                minutes = 0
-                hours = 0
-                days = 7
                 tgid = user['tgid']
-                all_time += minutes * 60
-                all_time += hours * 60 * 60
-                all_time += days * 60 * 60 * 24
+                all_time += 7 * 60 * 60 * 24
                 await AddTimeToUser(tgid, all_time)
+                await bot.send_message(tgid, user["fullname"] + texts_for_bot["alert_to_extend_sub"])
 
-                BotChecking.send_message(tgid, user["fullname"] + texts_for_bot["alert_to_extend_sub"],
-                                         parse_mode="HTML")
-                await bot.send_message(tgid, e.emojize(
-                    'Данные для входа были обновлены, скачайте новый файл авторизации через раздел "Как подключить :gear:"'))
-
-
-            BotChecking.send_message(CONFIG["admin_tg_id"], f"Добавлено время для {count} пользователей",
+            await bot.send_message(CONFIG["admin_tg_id"], f"Добавлено время для {count} пользователей",
                                      parse_mode="HTML")
 
         if e.demojize(m.text) == "Пользователей с подпиской":
