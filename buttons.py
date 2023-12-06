@@ -31,6 +31,7 @@ async def admin_buttons():
     Butt_admin.add(types.KeyboardButton(e.emojize(f"Вывести пользователей :bust_in_silhouette:")))
     Butt_admin.add(types.KeyboardButton(e.emojize(f"Редактировать пользователя по id :pencil:")))
     Butt_admin.add(types.KeyboardButton(e.emojize(f"Статичные пользователи")))
+    Butt_admin.add(types.KeyboardButton(e.emojize(f"Добавить пробный период тем у кого закончился")))
     Butt_admin.add(types.KeyboardButton(e.emojize("Главное меню :right_arrow_curving_left:")))
     return Butt_admin
 

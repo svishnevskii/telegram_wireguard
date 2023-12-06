@@ -340,6 +340,8 @@ async def Work_with_Message(m: types.Message):
                                        parse_mode="HTML")
             return
 
+        if e.demojize(m.text) == "Добавить пробный период тем у кого закончился":
+            addTimeToUsers(texts_for_bot["add_trial_days"])
         if e.demojize(m.text) == "Пользователей с подпиской":
             allusers = await user_dat.GetAllUsersWithSub()
             readymass = []
@@ -574,7 +576,7 @@ async def got_payment(m):
                            reply_markup=await buttons.main_buttons(user_dat), parse_mode="HTML")
     await AddTimeToUser(m.from_user.id, month * 30 * 24 * 60 * 60)
 
-    # await bot.send_message(userdat.tgid,"Ваша подписка обновлена!",reply_markup=Butt_main)
+    await bot.send_message(CONFIG["admin_tg_id"], f"Новая оплата подписки", parse_mode="HTML")
 
 
 bot.add_custom_filter(asyncio_filters.StateFilter(bot))
@@ -686,6 +688,31 @@ def checkTime():
         except Exception as err:
             print(err)
             pass
+
+
+def addTimeToUsers(trialDays):
+    db = sqlite3.connect(DBCONNECT)
+    db.row_factory = sqlite3.Row
+    c = await db.execute(f"SELECT * FROM userss where subscription < ?", (str(int(time.time())),))
+    users = c.fetchall()
+    c.close()
+    db.close()
+    all_time = 0
+    count = 0
+    BotChecking = TeleBot(BOTAPIKEY)
+    for user in users:
+        count +=1
+        minutes = 0
+        hours = 0
+        days = trialDays
+        tgid = user['tgid']
+        all_time += minutes * 60
+        all_time += hours * 60 * 60
+        all_time += days * 60 * 60 * 24
+        await AddTimeToUser(tgid, all_time)
+
+        BotChecking.send_message(CONFIG["admin_tg_id"], user["fullname"] + texts_for_bot["alert_to_extend_sub"], parse_mode="HTML")
+    BotChecking.send_message(CONFIG["admin_tg_id"], f"Добавлено время для {count} пользователей", parse_mode="HTML")
 
 
 if __name__ == '__main__':
