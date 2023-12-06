@@ -340,8 +340,27 @@ async def Work_with_Message(m: types.Message):
                                        parse_mode="HTML")
             return
 
-        if e.demojize(m.text) == "Добавить пробный период тем у кого закончился":
-            addTimeUnSubUsers(user_dat,texts_for_bot["add_trial_days"])
+        if e.demojize(m.text) == "Продлить пробный период":
+            users = await user_dat.GetAllUsersWithSub()
+            all_time = 0
+            count = 0
+            BotChecking = TeleBot(BOTAPIKEY)
+            for user in users:
+                count += 1
+                minutes = 0
+                hours = 0
+                days = 7
+                tgid = user['tgid']
+                all_time += minutes * 60
+                all_time += hours * 60 * 60
+                all_time += days * 60 * 60 * 24
+                await AddTimeToUser(tgid, all_time)
+
+                BotChecking.send_message(CONFIG["admin_tg_id"], user["fullname"] + texts_for_bot["alert_to_extend_sub"],
+                                         parse_mode="HTML")
+            BotChecking.send_message(CONFIG["admin_tg_id"], f"Добавлено время для {count} пользователей",
+                                     parse_mode="HTML")
+
         if e.demojize(m.text) == "Пользователей с подпиской":
             allusers = await user_dat.GetAllUsersWithSub()
             readymass = []
@@ -688,26 +707,6 @@ def checkTime():
         except Exception as err:
             print(err)
             pass
-
-
-def addTimeUnSubUsers(users, trialDays):
-    users = users.GetAllUsers()
-    all_time = 0
-    count = 0
-    BotChecking = TeleBot(BOTAPIKEY)
-    for user in users:
-        count +=1
-        minutes = 0
-        hours = 0
-        days = trialDays
-        tgid = user['tgid']
-        all_time += minutes * 60
-        all_time += hours * 60 * 60
-        all_time += days * 60 * 60 * 24
-        AddTimeToUser(tgid, all_time)
-
-        BotChecking.send_message(CONFIG["admin_tg_id"], user["fullname"] + texts_for_bot["alert_to_extend_sub"], parse_mode="HTML")
-    BotChecking.send_message(CONFIG["admin_tg_id"], f"Добавлено время для {count} пользователей", parse_mode="HTML")
 
 
 if __name__ == '__main__':
