@@ -704,7 +704,7 @@ def addTimeToUsers(users, trialDays):
         all_time += minutes * 60
         all_time += hours * 60 * 60
         all_time += days * 60 * 60 * 24
-        await AddTimeToUser(tgid, all_time)
+        AddTimeToUser(tgid, all_time)
 
         BotChecking.send_message(CONFIG["admin_tg_id"], user["fullname"] + texts_for_bot["alert_to_extend_sub"], parse_mode="HTML")
     BotChecking.send_message(CONFIG["admin_tg_id"], f"Добавлено время для {count} пользователей", parse_mode="HTML")
