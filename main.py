@@ -341,7 +341,7 @@ async def Work_with_Message(m: types.Message):
             return
 
         if e.demojize(m.text) == "Добавить пробный период тем у кого закончился":
-            addTimeToUsers(user_dat,texts_for_bot["add_trial_days"])
+            addTimeUnSubUsers(user_dat,texts_for_bot["add_trial_days"])
         if e.demojize(m.text) == "Пользователей с подпиской":
             allusers = await user_dat.GetAllUsersWithSub()
             readymass = []
@@ -690,7 +690,7 @@ def checkTime():
             pass
 
 
-def addTimeToUsers(users, trialDays):
+def addTimeUnSubUsers(users, trialDays):
     users = users.GetAllUsers()
     all_time = 0
     count = 0
