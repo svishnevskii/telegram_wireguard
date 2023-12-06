@@ -345,6 +345,7 @@ async def Work_with_Message(m: types.Message):
             all_time = 0
             count = 0
             BotChecking = TeleBot(BOTAPIKEY)
+            Butt_main = types.ReplyKeyboardMarkup(resize_keyboard=True)
             for user in users:
                 count += 1
                 minutes = 0
@@ -358,6 +359,10 @@ async def Work_with_Message(m: types.Message):
 
                 BotChecking.send_message(CONFIG["admin_tg_id"], user["fullname"] + texts_for_bot["alert_to_extend_sub"],
                                          parse_mode="HTML")
+                await bot.send_message(tgid, e.emojize(
+                    'Данные для входа были обновлены, скачайте новый файл авторизации через раздел "Как подключить :gear:"'))
+                Butt_main.add(types.KeyboardButton(e.emojize(f"Как подключить :gear:")))
+
             BotChecking.send_message(CONFIG["admin_tg_id"], f"Добавлено время для {count} пользователей",
                                      parse_mode="HTML")
 
