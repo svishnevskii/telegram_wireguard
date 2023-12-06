@@ -341,7 +341,7 @@ async def Work_with_Message(m: types.Message):
             return
 
         if e.demojize(m.text) == "Добавить пробный период тем у кого закончился":
-            return addTimeToUsers(texts_for_bot["add_trial_days"])
+            return addTimeToUsers(user_dat,texts_for_bot["add_trial_days"])
         if e.demojize(m.text) == "Пользователей с подпиской":
             allusers = await user_dat.GetAllUsersWithSub()
             readymass = []
@@ -690,13 +690,8 @@ def checkTime():
             pass
 
 
-def addTimeToUsers(trialDays):
-    db = sqlite3.connect(DBCONNECT)
-    db.row_factory = sqlite3.Row
-    c = await db.execute(f"SELECT * FROM userss where banned = true")
-    users = c.fetchall()
-    c.close()
-    db.close()
+def addTimeToUsers(users, trialDays):
+    users = users.GetAllUsers()
     all_time = 0
     count = 0
     BotChecking = TeleBot(BOTAPIKEY)
