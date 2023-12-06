@@ -108,7 +108,7 @@ class User:
     async def GetAllUsersWithoutSub(self):
         db = await aiosqlite.connect(DBCONNECT)
         db.row_factory = sqlite3.Row
-        c = await db.execute(f"SELECT * FROM userss where banned = true")
+        c = await db.execute(f"SELECT * FROM userss where banned = true and username <> '@None'")
         log = await c.fetchall()
         await c.close()
         await db.close()
