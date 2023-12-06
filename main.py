@@ -341,18 +341,32 @@ async def Work_with_Message(m: types.Message):
             return
 
         if e.demojize(m.text) == "Продлить пробный период":
-            users = await user_dat.GetAllUsersWithoutSub()
-            all_time = 0
-            count = 0
-            for user in users:
-                count += 1
-                tgid = user['tgid']
-                all_time += 7 * 60 * 60 * 24
-                await AddTimeToUser(tgid, all_time)
-                await bot.send_message(tgid, user["fullname"] + texts_for_bot["alert_to_extend_sub"])
+            db = sqlite3.connect(DBCONNECT)
+            db.row_factory = sqlite3.Row
+            c = db.execute(f"SELECT * FROM userss where banned=true and username <> '@None'")
+            log = c.fetchall()
+            c.close()
+            db.close()
+            BotChecking = TeleBot(BOTAPIKEY)
+            timetoadd = 7 * 60 * 60 * 24
+            countAdded = 0
+            db = sqlite3.connect(DBCONNECT)
+            for i in log:
+                countAdded += 1
+                db.execute(f"Update userss set subscription = ?, banned=false, notion_oneday=false where tgid=?",
+                           (str(int(time.time()) + timetoadd), i["tgid"]))
+                db.commit()
+                db.close()
+                subprocess.call(f'./addusertovpn.sh {str(i["tgid"])}', shell=True)
 
-            await bot.send_message(CONFIG["admin_tg_id"], f"Добавлено время для {count} пользователей",
-                                     parse_mode="HTML")
+                Butt_main = types.ReplyKeyboardMarkup(resize_keyboard=True)
+                Butt_main.add(types.KeyboardButton(e.emojize(f"Продлить :money_bag:")),
+                              types.KeyboardButton(e.emojize(f"Как подключить :gear:")))
+                BotChecking.send_message(i['tgid'],
+                                         texts_for_bot["alert_to_extend_sub"],
+                                         reply_markup=Butt_main, parse_mode="HTML")
+                BotChecking.send_message(CONFIG['admin_tg_id'],
+                                         f"Добавлен пробный период {countAdded} пользователям", parse_mode="HTML")
 
         if e.demojize(m.text) == "Пользователей с подпиской":
             allusers = await user_dat.GetAllUsersWithSub()
@@ -679,7 +693,8 @@ def checkTime():
                     db.commit()
                     check = subprocess.call(f'./deleteuserfromvpn.sh {str(i[1])}', shell=True)
 
-                    dateto = datetime.utcfromtimestamp(int(i[2]) + CONFIG['UTC_time'] * 3600).strftime('%d.%m.%Y %H:%M')
+                    dateto = datetime.utcfromtimestamp(int(i[2]) + CONFIG['UTC_time'] * 3600).strftime(
+                        '%d.%m.%Y %H:%M')
                     Butt_main = types.ReplyKeyboardMarkup(resize_keyboard=True)
                     Butt_main.add(
                         types.KeyboardButton(e.emojize(f":red_circle: Закончилась: {dateto} МСК:red_circle:")))
@@ -696,6 +711,26 @@ def checkTime():
                     db.commit()
                     BotChecking = TeleBot(BOTAPIKEY)
                     BotChecking.send_message(i['tgid'], texts_for_bot["alert_to_renew_sub"], parse_mode="HTML")
+
+                # Дарим бесплатную подписку на 7 дней если он висит 3 дня как неактивный и не ливнул
+                if remained_time <= 259200 and i['trial_continue'] == 0:
+                    BotChecking = TeleBot(BOTAPIKEY)
+                    timetoadd = 7 * 60 * 60 * 24
+                    db = sqlite3.connect(DBCONNECT)
+                    db.execute(f"UPDATE userss SET trial_continue=1 where tgid=?", (i[1],))
+                    db.execute(
+                        f"Update userss set subscription = ?, banned=false, notion_oneday=false where tgid=?",
+                        (str(int(time.time()) + timetoadd), i[1]))
+                    db.commit()
+                    db.close()
+                    subprocess.call(f'./addusertovpn.sh {str(i[1])}', shell=True)
+
+                    Butt_main = types.ReplyKeyboardMarkup(resize_keyboard=True)
+                    Butt_main.add(types.KeyboardButton(e.emojize(f"Продлить :money_bag:")),
+                                  types.KeyboardButton(e.emojize(f"Как подключить :gear:")))
+                    BotChecking.send_message(i['tgid'],
+                                             e.emojize(texts_for_bot["alert_to_extend_sub"]),
+                                             reply_markup=Butt_main, parse_mode="HTML")
 
         except Exception as err:
             print(err)
