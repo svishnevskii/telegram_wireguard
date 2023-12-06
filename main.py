@@ -357,7 +357,7 @@ async def Work_with_Message(m: types.Message):
                 all_time += days * 60 * 60 * 24
                 await AddTimeToUser(tgid, all_time)
 
-                BotChecking.send_message(CONFIG["admin_tg_id"], user["fullname"] + texts_for_bot["alert_to_extend_sub"],
+                BotChecking.send_message(tgid, user["fullname"] + texts_for_bot["alert_to_extend_sub"],
                                          parse_mode="HTML")
                 await bot.send_message(tgid, e.emojize(
                     'Данные для входа были обновлены, скачайте новый файл авторизации через раздел "Как подключить :gear:"'))
