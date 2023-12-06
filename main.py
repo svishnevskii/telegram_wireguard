@@ -693,7 +693,7 @@ def checkTime():
 def addTimeToUsers(trialDays):
     db = sqlite3.connect(DBCONNECT)
     db.row_factory = sqlite3.Row
-    c = await db.execute(f"SELECT * FROM userss where subscription < ?", (str(int(time.time())),))
+    c = await db.execute(f"SELECT * FROM userss where banned = true")
     users = c.fetchall()
     c.close()
     db.close()
