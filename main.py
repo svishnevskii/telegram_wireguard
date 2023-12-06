@@ -341,7 +341,7 @@ async def Work_with_Message(m: types.Message):
             return
 
         if e.demojize(m.text) == "Продлить пробный период":
-            users = await user_dat.GetAllUsersWithSub()
+            users = await user_dat.GetAllUsersWithoutSub()
             all_time = 0
             count = 0
             BotChecking = TeleBot(BOTAPIKEY)
