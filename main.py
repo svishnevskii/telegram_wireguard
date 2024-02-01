@@ -320,7 +320,7 @@ async def Work_with_Message(m: types.Message):
             return
 
         if e.demojize(m.text) == "Всех пользователей":
-            allusers = await user_dat.GetAllUsers()
+            allusers = await user_dat.GetAllUsersDesc()
             readymass = []
             readymes = ""
             for i in allusers:
@@ -712,25 +712,29 @@ def checkTime():
                     BotChecking = TeleBot(BOTAPIKEY)
                     BotChecking.send_message(i['tgid'], texts_for_bot["alert_to_renew_sub"], parse_mode="HTML")
 
-                # Дарим бесплатную подписку на 7 дней если он висит 3 дня как неактивный и не ливнул
-                # if remained_time <= 259200 and i['trial_continue'] == 0:
-                #     BotChecking = TeleBot(BOTAPIKEY)
-                #     timetoadd = 7 * 60 * 60 * 24
-                #     db = sqlite3.connect(DBCONNECT)
-                #     db.execute(f"UPDATE userss SET trial_continue=1 where tgid=?", (i[1],))
-                #     db.execute(
-                #         f"Update userss set subscription = ?, banned=false, notion_oneday=false where tgid=?",
-                #         (str(int(time.time()) + timetoadd), i[1]))
-                #     db.commit()
-                #     db.close()
-                #     subprocess.call(f'./addusertovpn.sh {str(i[1])}', shell=True)
-                #
-                #     Butt_main = types.ReplyKeyboardMarkup(resize_keyboard=True)
-                #     Butt_main.add(types.KeyboardButton(e.emojize(f"Продлить :money_bag:")),
-                #                   types.KeyboardButton(e.emojize(f"Как подключить :gear:")))
-                #     BotChecking.send_message(i['tgid'],
-                #                              e.emojize(texts_for_bot["alert_to_extend_sub"]),
-                #                              reply_markup=Butt_main, parse_mode="HTML")
+                # Дарим бесплатную подписку на 7 дней если он висит 7 дня как неактивный и не ливнул
+                # Не удалил и не заблокировал бот в течение 3х дней
+                approveLTV = 60 * 60 * 24 * int(CONFIG['trial_period'])
+                # От текущего времени вычитаем дату старта
+                expire_time = time_now - int(i[2])
+                if expire_time >= approveLTV and i['trial_continue'] == 0:
+                    BotChecking = TeleBot(BOTAPIKEY)
+                    timetoadd = approveLTV
+                    db = sqlite3.connect(DBCONNECT)
+                    db.execute(f"UPDATE userss SET trial_continue=1 where tgid=?", (i[1],))
+                    db.execute(
+                        f"Update userss set subscription = ?, banned=false, notion_oneday=false where tgid=?",
+                        (str(int(time.time()) + timetoadd), i[1]))
+                    db.commit()
+                    db.close()
+                    subprocess.call(f'./addusertovpn.sh {str(i[1])}', shell=True)
+
+                    Butt_main = types.ReplyKeyboardMarkup(resize_keyboard=True)
+                    Butt_main.add(types.KeyboardButton(e.emojize(f"Продлить :money_bag:")),
+                                  types.KeyboardButton(e.emojize(f"Как подключить :gear:")))
+                    BotChecking.send_message(i['tgid'],
+                                             e.emojize(texts_for_bot["alert_to_extend_sub"]),
+                                             reply_markup=Butt_main, parse_mode="HTML")
 
         except Exception as err:
             print(err)
