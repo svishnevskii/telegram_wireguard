@@ -99,7 +99,7 @@ class User:
     async def GetAllUsersDesc(self):
         db = await aiosqlite.connect(DBCONNECT)
         db.row_factory = sqlite3.Row
-        c = await db.execute(f"SELECT * FROM userss order by id desc limit 100")
+        c = await db.execute(f"SELECT * FROM userss order by id desc limit 10")
         log = await c.fetchall()
         await c.close()
         await db.close()
@@ -137,8 +137,4 @@ class User:
             db.row_factory = sqlite3.Row
             await db.execute(f"Update userss set username = ?, fullname = ? where id = ?", (username,message.from_user.full_name,self.id))
             await db.commit()
-
-
-
-
 
