@@ -594,14 +594,13 @@ async def checkout(pre_checkout_query):
 async def got_payment(m):
     payment: types.SuccessfulPayment = m.successful_payment
     month = int(str(payment.invoice_payload).split(":")[1])
-    print(payment.invoice_payload)
     user = await User.GetInfo(m.from_user.id)
     addTimeSubscribe = month * 30 * 24 * 60 * 60;
 
     # save info about user
     await user.NewPay(
         user.tgid,
-        123,
+        payment.invoice_payload,
         month * CONFIG['one_month_cost'],
         addTimeSubscribe,
         m.from_user.id)
