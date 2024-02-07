@@ -749,4 +749,3 @@ if __name__ == '__main__':
     threadcheckTime.start()
 
     asyncio.run(bot.polling(non_stop=True, interval=0, request_timeout=60, timeout=60))
-
