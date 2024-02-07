@@ -9,11 +9,8 @@ import aiosqlite
 
 import buttons
 import dbworker
-import payworker
 
 from telebot import TeleBot
-from pyqiwip2p import QiwiP2P
-from pyqiwip2p import AioQiwiP2P
 from telebot import asyncio_filters
 from telebot.async_telebot import AsyncTeleBot
 import emoji as e
