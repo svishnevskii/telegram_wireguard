@@ -320,7 +320,7 @@ async def Work_with_Message(m: types.Message):
             return
 
         if e.demojize(m.text) == "Всех пользователей":
-            allusers = await user_dat.GetAllUsers()
+            allusers = await user_dat.GetAllUsersDesc()
             readymass = []
             readymes = ""
             for i in allusers:
@@ -343,7 +343,7 @@ async def Work_with_Message(m: types.Message):
         if e.demojize(m.text) == "Продлить пробный период":
             db = sqlite3.connect(DBCONNECT)
             db.row_factory = sqlite3.Row
-            c = db.execute(f"SELECT * FROM userss where banned=true and username <> '@None'")
+            c = db.execute(f"SELECT * FROM userss where banned=true")
             log = c.fetchall()
             c.close()
             db.close()
@@ -712,10 +712,14 @@ def checkTime():
                     BotChecking = TeleBot(BOTAPIKEY)
                     BotChecking.send_message(i['tgid'], texts_for_bot["alert_to_renew_sub"], parse_mode="HTML")
 
-                # Дарим бесплатную подписку на 7 дней если он висит 3 дня как неактивный и не ливнул
-                if remained_time <= 259200 and i['trial_continue'] == 0:
+                # Дарим бесплатную подписку на 7 дней если он висит 7 дня как неактивный и не ливнул
+                # Не удалил и не заблокировал бот в течение 3х дней
+                approveLTV = 60 * 60 * 24 * int(CONFIG['trial_period'])
+                # От текущего времени вычитаем дату старта
+                expire_time = time_now - int(i[2])
+                if expire_time >= approveLTV and i['trial_continue'] == 0:
                     BotChecking = TeleBot(BOTAPIKEY)
-                    timetoadd = 7 * 60 * 60 * 24
+                    timetoadd = approveLTV
                     db = sqlite3.connect(DBCONNECT)
                     db.execute(f"UPDATE userss SET trial_continue=1 where tgid=?", (i[1],))
                     db.execute(
@@ -745,3 +749,4 @@ if __name__ == '__main__':
     threadcheckTime.start()
 
     asyncio.run(bot.polling(non_stop=True, interval=0, request_timeout=60, timeout=60))
+
