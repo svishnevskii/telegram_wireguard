@@ -58,6 +58,11 @@ class MyStates(StatesGroup):
 @bot.message_handler(commands=['start'])
 async def start(message: types.Message):
     if message.chat.type == "private":
+        referral_code = message.get_args()
+        if referral_code:
+            # Пользователь пришел по реферральной ссылке, обрабатываем это
+            await process_referral(message, referral_code)
+
         await bot.delete_state(message.from_user.id)
         user_dat = await User.GetInfo(message.chat.id)
         if user_dat.registered:
@@ -75,6 +80,11 @@ async def start(message: types.Message):
             await bot.send_message(message.chat.id, e.emojize(texts_for_bot["hello_message"]), parse_mode="HTML",
                                    reply_markup=await main_buttons(user_dat))
             await bot.send_message(message.chat.id, e.emojize(texts_for_bot["trial_message"]))
+
+# Обработка пользователей, пришедших по реферральной ссылке
+async def process_referral(message: types.Message, referral_code: str):
+    # В этой функции вы можете реализовать логику обработки реферральных пользователей
+    await message.answer(f"Вы пришли по реферральной ссылке с кодом {referral_code}!")
 
 
 @bot.message_handler(state=MyStates.editUser, content_types=["text"])
