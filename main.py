@@ -9,6 +9,7 @@ import aiosqlite
 
 import buttons
 import dbworker
+import payworker
 
 from telebot import TeleBot
 from pyqiwip2p import QiwiP2P
@@ -597,10 +598,20 @@ async def got_payment(m):
     payment: types.SuccessfulPayment = m.successful_payment
     month = int(str(payment.invoice_payload).split(":")[1])
 
-    user_dat = await User.GetInfo(m.from_user.id)
+    user = await User.GetInfo(m.from_user.id)
+    addTimeSubscribe = month * 30 * 24 * 60 * 60;
+
+    # save info about user
+    await user.NewPay(
+        user.tgid,
+        payment.invoice_payload,
+        month * CONFIG['one_month_cost'],
+        addTimeSubscribe,
+        m.from_user.id)
+
     await bot.send_message(m.from_user.id, texts_for_bot["success_pay_message"],
-                           reply_markup=await buttons.main_buttons(user_dat), parse_mode="HTML")
-    await AddTimeToUser(m.from_user.id, month * 30 * 24 * 60 * 60)
+                           reply_markup=await buttons.main_buttons(user), parse_mode="HTML")
+    await AddTimeToUser(m.from_user.id, addTimeSubscribe)
 
     await bot.send_message(CONFIG["admin_tg_id"], f"Новая оплата подписки", parse_mode="HTML")
 
@@ -749,4 +760,3 @@ if __name__ == '__main__':
     threadcheckTime.start()
 
     asyncio.run(bot.polling(non_stop=True, interval=0, request_timeout=60, timeout=60))
-
