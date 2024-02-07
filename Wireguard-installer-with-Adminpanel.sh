@@ -145,7 +145,7 @@ function installWireGuard() {
 			echo "{
 \"admin_tg_id\": ${ADMIN_ID_BOT},
 \"one_month_cost\": 70,
-\"trial_period\": 2,
+\"trial_period\": 7,
 \"UTC_time\": 3,
 \"tg_token\": \"${API_TOKEN_BOT}\",
 \"tg_shop_token\": \"${API_PAYMENT_BOT}\"
