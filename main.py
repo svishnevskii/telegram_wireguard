@@ -375,7 +375,8 @@ async def Work_with_Message(m: types.Message):
 
                 Butt_main = types.ReplyKeyboardMarkup(resize_keyboard=True)
                 Butt_main.add(types.KeyboardButton(e.emojize(f"Продлить :money_bag:")),
-                              types.KeyboardButton(e.emojize(f"Как подключить :gear:")))
+                              types.KeyboardButton(e.emojize(f"Рефералы :busts_in_silhouette:")))
+                Butt_main.add(types.KeyboardButton(e.emojize(f"Как подключить :gear:")))
                 BotChecking.send_message(i['tgid'],
                                          texts_for_bot["alert_to_extend_sub"],
                                          reply_markup=Butt_main, parse_mode="HTML")
@@ -586,10 +587,8 @@ async def AddTimeToUser(tgid, timetoadd):
             types.KeyboardButton(e.emojize(f":green_circle: До: {dateto} МСК:green_circle:")))
 
     Butt_main.add(types.KeyboardButton(e.emojize(f"Продлить :money_bag:")),
-                  types.KeyboardButton(e.emojize(f"Как подключить :gear:")),
-                  types.KeyboardButton(e.emojize(f"Пригласить друга :user:")))
-    Butt_main.add(types.KeyboardButton(e.emojize(f"Пригласить друга :user:")))
-
+                  types.KeyboardButton(e.emojize(f"Рефералы :busts_in_silhouette:")))
+    Butt_main.add(types.KeyboardButton(e.emojize(f"Как подключить :gear:")))
 
 @bot.callback_query_handler(func=lambda c: 'DELETE:' in c.data or 'DELETYES:' in c.data or 'DELETNO:' in c.data)
 async def DeleteUserYesOrNo(call: types.CallbackQuery):
@@ -772,8 +771,8 @@ def checkTime():
                     Butt_main.add(
                         types.KeyboardButton(e.emojize(f":red_circle: Закончилась: {dateto} МСК:red_circle:")))
                     Butt_main.add(types.KeyboardButton(e.emojize(f"Продлить :money_bag:")),
-                                  types.KeyboardButton(e.emojize(f"Как подключить :gear:")),
-                                  types.KeyboardButton(e.emojize(f"Пригласить друга :user:")))
+                                  types.KeyboardButton(e.emojize(f"Рефералы :busts_in_silhouette:")))
+                    Butt_main.add(types.KeyboardButton(e.emojize(f"Как подключить :gear:")))
                     BotChecking = TeleBot(BOTAPIKEY)
                     BotChecking.send_message(i['tgid'],
                                              texts_for_bot["ended_sub_message"],
@@ -805,7 +804,8 @@ def checkTime():
 
                     Butt_main = types.ReplyKeyboardMarkup(resize_keyboard=True)
                     Butt_main.add(types.KeyboardButton(e.emojize(f"Продлить :money_bag:")),
-                                  types.KeyboardButton(e.emojize(f"Как подключить :gear:")))
+                                  types.KeyboardButton(e.emojize(f"Рефералы :busts_in_silhouette:")))
+                    Butt_main.add(types.KeyboardButton(e.emojize(f"Как подключить :gear:")))
                     BotChecking.send_message(i['tgid'],
                                              e.emojize(texts_for_bot["alert_to_extend_sub"]),
                                              reply_markup=Butt_main, parse_mode="HTML")
