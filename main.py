@@ -501,7 +501,7 @@ async def Work_with_Message(m: types.Message):
 
         msg = f"<b>Приглашайте друзей и получайте +1 месяц бесплатно за каждого нового друга</b>\n\r\n\r" \
               f"Количество рефералов: {str(countReferal)} " \
-              f"\n\rВаша реферальная ссылка: \n\r <code>{refLink}</code>"
+              f"\n\rВаша реферальная ссылка: \n\r<code>{refLink}</code>"
 
         await bot.send_message(chat_id=m.chat.id, text=msg, parse_mode='HTML')
 
