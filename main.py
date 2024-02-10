@@ -497,7 +497,7 @@ async def Work_with_Message(m: types.Message):
 
     if e.demojize(m.text) == "Рефералы :busts_in_silhouette:":
         countReferal = await user_dat.countReferrerByUser()
-        refLink = "https://t.me/testFreeVPNGotBot?start=" + str(user_dat.tgid)
+        refLink = "https://t.me/FreeVpnDownloadBot?start=" + str(user_dat.tgid)
 
         msg = f"<b>Приглашайте друзей и получайте +1 месяц бесплатно за каждого нового друга</b>\n\r\n\r" \
               f"Количество рефералов: {str(countReferal)} " \
@@ -509,7 +509,7 @@ async def Work_with_Message(m: types.Message):
 async def Referrer(call: types.CallbackQuery):
     user_dat = await User.GetInfo(call.from_user.id)
     countReferal = await user_dat.countReferrerByUser()
-    refLink = "https://t.me/testFreeVPNGotBot?start=" + str(user_dat.tgid)
+    refLink = "https://t.me/FreeVpnDownloadBot?start=" + str(user_dat.tgid)
 
     msg = f"Приглашайте друзей и получайте +1 месяц безлимитного тарифа за каждого нового друга\n\r\n\r" \
           f"Количество рефералов: {str(countReferal)} " \
