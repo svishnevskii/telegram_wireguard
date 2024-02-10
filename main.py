@@ -58,10 +58,6 @@ class MyStates(StatesGroup):
 @bot.message_handler(commands=['start'])
 async def start(message: types.Message):
     if message.chat.type == "private":
-        referral_code = message.get_args()
-        if referral_code:
-            # Пользователь пришел по реферральной ссылке, обрабатываем это
-            await process_referral(message, referral_code)
 
         await bot.delete_state(message.from_user.id)
         user_dat = await User.GetInfo(message.chat.id)
@@ -72,19 +68,25 @@ async def start(message: types.Message):
             try:
                 username = "@" + str(message.from_user.username)
             except:
-
                 username = str(message.from_user.id)
+            # Определяем referrer_id
+            arg_referrer_id = message.text[7:]
+            referrer_id = None if arg_referrer_id is None else arg_referrer_id
+            await user_dat.Adduser(username, message.from_user.full_name,referrer_id)
+            # Обработка пользователей, пришедших по реферральной ссылке
+            if referrer_id and referrer_id != user_dat.tgid:
+                await user_dat.addTrialForReferrer(referrer_id)
+                # Начислим бесплатный период рефереру
+                # Пользователь пришел по реферральной ссылке, обрабатываем это
+                await bot.send_message(message.chat.id, f"Вы пришли по реферральной ссылке с кодом {referrer_id}")
+                await bot.send_message(referrer_id,
+                                       f"Вам начислен +{CONFIG['count_free_from_referrer']} месяц за нового пользователя")
 
-            await user_dat.Adduser(username, message.from_user.full_name)
             user_dat = await User.GetInfo(message.chat.id)
             await bot.send_message(message.chat.id, e.emojize(texts_for_bot["hello_message"]), parse_mode="HTML",
                                    reply_markup=await main_buttons(user_dat))
             await bot.send_message(message.chat.id, e.emojize(texts_for_bot["trial_message"]))
 
-# Обработка пользователей, пришедших по реферральной ссылке
-async def process_referral(message: types.Message, referral_code: str):
-    # В этой функции вы можете реализовать логику обработки реферральных пользователей
-    await message.answer(f"Вы пришли по реферральной ссылке с кодом {referral_code}!")
 
 
 @bot.message_handler(state=MyStates.editUser, content_types=["text"])
@@ -303,7 +305,11 @@ async def Work_with_Message(m: types.Message):
 
             username = str(m.from_user.id)
 
-        await user_dat.Adduser(username, m.from_user.full_name)
+        # Определяем referrer_id
+        arg_referrer_id = m.text[7:]
+        referrer_id = arg_referrer_id if arg_referrer_id != user_dat.tgid else 0
+
+        await user_dat.Adduser(username, m.from_user.full_name, referrer_id)
         await bot.send_message(m.chat.id,
                                texts_for_bot["hello_message"],
                                parse_mode="HTML", reply_markup=await main_buttons(user_dat))
@@ -437,6 +443,7 @@ async def Work_with_Message(m: types.Message):
 
     if e.demojize(m.text) == "Продлить :money_bag:":
         payment_info = await user_dat.PaymentInfo()
+
         # if not payment_info is None:
         #     urltopay=CONFIG["url_redirect_to_pay"]+str((await p2p.check(bill_id=payment_info['bill_id'])).pay_url)[-36:]
         #     Butt_payment = types.InlineKeyboardMarkup()
@@ -449,18 +456,25 @@ async def Work_with_Message(m: types.Message):
         if True:
             Butt_payment = types.InlineKeyboardMarkup()
             Butt_payment.add(
-                types.InlineKeyboardButton(e.emojize(f"1 мес. 📅 - {str(1 * CONFIG['one_month_cost'])} руб."),
+                types.InlineKeyboardButton(e.emojize(f"1 мес. 📅 - {int(getCostBySale(1))} руб."),
                                            callback_data="BuyMonth:1"))
             Butt_payment.add(
-                types.InlineKeyboardButton(e.emojize(f"3 мес. 📅 - {str(3 * CONFIG['one_month_cost'])} руб."),
+                types.InlineKeyboardButton(e.emojize(f"3 мес. 📅 - {int(getCostBySale(3))} руб."),
                                            callback_data="BuyMonth:3"))
             Butt_payment.add(
-                types.InlineKeyboardButton(e.emojize(f"6 мес. 📅 - {str(6 * CONFIG['one_month_cost'])} руб."),
+                types.InlineKeyboardButton(e.emojize(f"6 мес. 📅 - {int(getCostBySale(6))} руб."),
                                            callback_data="BuyMonth:6"))
+            Butt_payment.add(
+                types.InlineKeyboardButton(e.emojize(f"12 мес. 📅 - {int(getCostBySale(12))} руб."),
+                                           callback_data="BuyMonth:12"))
+            Butt_payment.add(
+                types.InlineKeyboardButton(e.emojize(f"Беслатно +{CONFIG['count_free_from_referrer']} месяц за нового друга"), callback_data="Referrer"))
+
             # await bot.send_message(m.chat.id, "<b>Оплатить можно с помощью Банковской карты или Qiwi кошелька!</b>\n\nВыберите на сколько месяцев хотите приобрести подписку:", reply_markup=Butt_payment,parse_mode="HTML")
             await bot.send_message(m.chat.id,
-                                   "<b>Оплатить можно с помощью Банковской карты!</b>\n\nВыберите на сколько месяцев хотите приобрести подписку:",
+                                   "<b>Оплатить можно с помощью Банковской карты!</b>\n\nВыберите на сколько месяцев хотите приобрести VPN:",
                                    reply_markup=Butt_payment, parse_mode="HTML")
+
 
     if e.demojize(m.text) == "Как подключить :gear:":
         if user_dat.trial_subscription == False:
@@ -480,30 +494,55 @@ async def Work_with_Message(m: types.Message):
         else:
             await bot.send_message(chat_id=m.chat.id, text="Сначала нужно купить подписку!")
 
+    if e.demojize(m.text) == "Рефералы :busts_in_silhouette:":
+        countReferal = await user_dat.countReferrerByUser()
+        refLink = "https://t.me/testFreeVPNGotBot?start=" + str(user_dat.tgid)
+
+        msg = f"<b>Приглашайте друзей и получайте +1 месяц бесплатно за каждого нового друга</b>\n\r\n\r" \
+              f"Количество рефералов: {str(countReferal)} " \
+              f"\n\rВаша реферальная ссылка: \n\r <code>{refLink}</code>"
+
+        await bot.send_message(chat_id=m.chat.id, text=msg, parse_mode='HTML')
+
+@bot.callback_query_handler(func=lambda c: 'Referrer' in c.data)
+async def Referrer(call: types.CallbackQuery):
+    user_dat = await User.GetInfo(call.from_user.id)
+    countReferal = await user_dat.countReferrerByUser()
+    refLink = "https://t.me/testFreeVPNGotBot?start=" + str(user_dat.tgid)
+
+    msg = f"Приглашайте друзей и получайте +1 месяц безлимитного тарифа за каждого нового друга\n\r\n\r" \
+          f"Количество рефералов: {str(countReferal)} " \
+          f"\n\rВаша реферальная ссылка: \n\r<code>{refLink}</code>"
+
+    await bot.send_message(chat_id=call.message.chat.id, text=msg, parse_mode='HTML')
 
 @bot.callback_query_handler(func=lambda c: 'BuyMonth:' in c.data)
 async def Buy_month(call: types.CallbackQuery):
     user_dat = await User.GetInfo(call.from_user.id)
-    payment_info = await user_dat.PaymentInfo()
-    if payment_info is None:
-        Month_count = int(str(call.data).split(":")[1])
-        # new_bill = await p2p.bill(amount=Month_count*CONFIG['one_month_cost'], lifetime=45, theme_code=CONFIG['qiwi_theme_code'],
-        #                     comment=f"Оплата VPN на {Month_count} мес. для пользователя {call.from_user.id}")
-        # urltopay=CONFIG["url_redirect_to_pay"]+str(new_bill.pay_url)[-36:]
-        # bill_id = new_bill.bill_id
-        await bot.delete_message(call.message.chat.id, call.message.id)
-        bill = await bot.send_invoice(call.message.chat.id, f"Оплата VPN", f"VPN на {str(Month_count)} мес.", call.data,
-                                      currency="RUB", prices=[
-                types.LabeledPrice(f"VPN на {str(Month_count)} мес.", Month_count * CONFIG['one_month_cost'] * 100)],
-                                      provider_token=CONFIG["tg_shop_token"])
+    # payment_info = await user_dat.PaymentInfo()
+
+    Month_count = int(str(call.data).split(":")[1])
+    # new_bill = await p2p.bill(amount=Month_count*CONFIG['one_month_cost'], lifetime=45, theme_code=CONFIG['qiwi_theme_code'],
+    #                     comment=f"Оплата VPN на {Month_count} мес. для пользователя {call.from_user.id}")
+    # urltopay=CONFIG["url_redirect_to_pay"]+str(new_bill.pay_url)[-36:]
+    # bill_id = new_bill.bill_id
+    await bot.delete_message(call.message.chat.id, call.message.id)
+    bill = await bot.send_invoice(
+        call.message.chat.id,
+        f"Оплата VPN", f"VPN на {str(Month_count)} мес.",
+        call.data,
+        currency="RUB",
+        prices=[types.LabeledPrice(f"VPN на {str(Month_count)} мес.", getCostBySale(Month_count) * 100)],
+        provider_token=CONFIG["tg_shop_token"]
+    )
         # await user_dat.NewPay(bill.,Month_count*CONFIG['one_month_cost'],Month_count*2592000,call.message.id)
 
-        # Butt_payment = types.InlineKeyboardMarkup()
-        # Butt_payment.add(
-        #     types.InlineKeyboardButton(e.emojize("Оплатить :money_bag:"), url=urltopay))
-        # Butt_payment.add(
-        #     types.InlineKeyboardButton(e.emojize("Отменить платеж :cross_mark:"), callback_data=f'Cancel:' + str(user_dat.tgid)))
-        # await bot.edit_message_text(chat_id=call.from_user.id,message_id=call.message.id,text=f"<b>Оплата: VPN на {str(Month_count)} мес.\n\nСумма оплаты: <code>{str(Month_count*CONFIG['one_month_cost'])} ₽</code></b>\nОплатите счет в течение 45 минут!",parse_mode="HTML",reply_markup=Butt_payment)
+    # Butt_payment = types.InlineKeyboardMarkup()
+    # Butt_payment.add(
+    #     types.InlineKeyboardButton(e.emojize("Оплатить :money_bag:"), url=urltopay))
+    # Butt_payment.add(
+    #     types.InlineKeyboardButton(e.emojize("Отменить платеж :cross_mark:"), callback_data=f'Cancel:' + str(user_dat.tgid)))
+    # await bot.edit_message_text(chat_id=call.from_user.id,message_id=call.message.id,text=f"<b>Оплата: VPN на {str(Month_count)} мес.\n\nСумма оплаты: <code>{str(Month_count*CONFIG['one_month_cost'])} ₽</code></b>\nОплатите счет в течение 45 минут!",parse_mode="HTML",reply_markup=Butt_payment)
 
     await bot.answer_callback_query(call.id)
 
@@ -534,6 +573,7 @@ async def AddTimeToUser(tgid, timetoadd):
             'Данные для входа были обновлены, скачайте новый файл авторизации через раздел "Как подключить :gear:"'))
     else:
         passdat = int(userdat.subscription) + timetoadd
+        print(passdat, timetoadd)
         await db.execute(f"Update userss set subscription = ?, notion_oneday=false where tgid=?",
                          (str(int(userdat.subscription) + timetoadd), userdat.tgid))
     await db.commit()
@@ -546,7 +586,9 @@ async def AddTimeToUser(tgid, timetoadd):
             types.KeyboardButton(e.emojize(f":green_circle: До: {dateto} МСК:green_circle:")))
 
     Butt_main.add(types.KeyboardButton(e.emojize(f"Продлить :money_bag:")),
-                  types.KeyboardButton(e.emojize(f"Как подключить :gear:")))
+                  types.KeyboardButton(e.emojize(f"Как подключить :gear:")),
+                  types.KeyboardButton(e.emojize(f"Пригласить друга :user:")))
+    Butt_main.add(types.KeyboardButton(e.emojize(f"Пригласить друга :user:")))
 
 
 @bot.callback_query_handler(func=lambda c: 'DELETE:' in c.data or 'DELETYES:' in c.data or 'DELETNO:' in c.data)
@@ -588,9 +630,9 @@ async def DeleteUserYesOrNo(call: types.CallbackQuery):
 
 @bot.pre_checkout_query_handler(func=lambda query: True)
 async def checkout(pre_checkout_query):
-    # (pre_checkout_query)
+    print(pre_checkout_query.total_amount)
     month = int(str(pre_checkout_query.invoice_payload).split(":")[1])
-    if month * 100 * CONFIG['one_month_cost'] != pre_checkout_query.total_amount:
+    if getCostBySale(month) * 100 != pre_checkout_query.total_amount:
         await bot.answer_pre_checkout_query(pre_checkout_query.id, ok=False,
                                             error_message="Нельзя купить по старой цене!")
         await bot.send_message(pre_checkout_query.from_user.id,
@@ -599,6 +641,17 @@ async def checkout(pre_checkout_query):
         await bot.answer_pre_checkout_query(pre_checkout_query.id, ok=True,
                                             error_message="Оплата не прошла, попробуйте еще раз!")
 
+def getCostBySale(month):
+    cost = month * CONFIG['one_month_cost']
+    if month == 3:
+        saleAsPersent = 10
+    if month == 6:
+        saleAsPersent = 13
+    if month == 12:
+        saleAsPersent = 1
+    else:
+        return int(cost)
+    return int(cost - (cost * saleAsPersent / 100))
 
 @bot.message_handler(content_types=['successful_payment'])
 async def got_payment(m):
@@ -606,12 +659,13 @@ async def got_payment(m):
     month = int(str(payment.invoice_payload).split(":")[1])
     user = await User.GetInfo(m.from_user.id)
     addTimeSubscribe = month * 30 * 24 * 60 * 60;
-
+    print(
+        payment
+    )
     # save info about user
     await user.NewPay(
-        user.tgid,
-        payment.invoice_payload,
-        month * CONFIG['one_month_cost'],
+        payment.provider_payment_charge_id,
+        getCostBySale(month),
         addTimeSubscribe,
         m.from_user.id)
 
@@ -619,7 +673,7 @@ async def got_payment(m):
                            reply_markup=await buttons.main_buttons(user), parse_mode="HTML")
     await AddTimeToUser(m.from_user.id, addTimeSubscribe)
 
-    await bot.send_message(CONFIG["admin_tg_id"], f"Новая оплата подписки", parse_mode="HTML")
+    await bot.send_message(CONFIG["admin_tg_id"], f"Оплата подписки {getCostBySale(month)}р. от @{str(m.from_user.username)}", parse_mode="HTML")
 
 
 bot.add_custom_filter(asyncio_filters.StateFilter(bot))
@@ -691,6 +745,8 @@ bot.add_custom_filter(asyncio_filters.StateFilter(bot))
 #             pass
 
 
+
+
 def checkTime():
     while True:
         try:
@@ -716,7 +772,8 @@ def checkTime():
                     Butt_main.add(
                         types.KeyboardButton(e.emojize(f":red_circle: Закончилась: {dateto} МСК:red_circle:")))
                     Butt_main.add(types.KeyboardButton(e.emojize(f"Продлить :money_bag:")),
-                                  types.KeyboardButton(e.emojize(f"Как подключить :gear:")))
+                                  types.KeyboardButton(e.emojize(f"Как подключить :gear:")),
+                                  types.KeyboardButton(e.emojize(f"Пригласить друга :user:")))
                     BotChecking = TeleBot(BOTAPIKEY)
                     BotChecking.send_message(i['tgid'],
                                              texts_for_bot["ended_sub_message"],

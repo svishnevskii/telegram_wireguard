@@ -16,6 +16,7 @@ class User:
         self.subscription = None
         self.trial_subscription = True
         self.registered = False
+        self.referral = True
         self.username = None
         self.fullname = None
 
@@ -34,10 +35,12 @@ class User:
             self.subscription = log["subscription"]
             self.trial_subscription = log["banned"]
             self.registered = True
+            self.referral = False
             self.username = log["username"]
             self.fullname = log["fullname"]
         else:
             self.registered = False
+            self.referral = True
 
         return self
 
@@ -75,11 +78,11 @@ class User:
         await db.close()
         return log
 
-    async def Adduser(self, username, full_name):
+    async def Adduser(self, username, full_name, referrer_id):
         if self.registered == False:
             db = await aiosqlite.connect(DBCONNECT)
-            await db.execute(f"INSERT INTO userss (tgid,subscription,username,fullname) values (?,?,?,?)", (
-                self.tgid, str(int(time.time()) + int(CONFIG['trial_period']) * 86400), str(username), str(full_name)))
+            await db.execute(f"INSERT INTO userss (tgid,subscription,username,fullname,referrer_id) values (?,?,?,?,?)", (
+                self.tgid, str(int(time.time()) + int(CONFIG['trial_period']) * 86400), str(username), str(full_name), referrer_id))
             await db.commit()
             check = subprocess.call(f'./addusertovpn.sh {str(self.tgid)}', shell=True)
             # print(check)
@@ -133,3 +136,17 @@ class User:
             await db.execute(f"Update userss set username = ?, fullname = ? where id = ?",
                              (username, message.from_user.full_name, self.id))
             await db.commit()
+
+    async def countReferrerByUser(self):
+        db = await aiosqlite.connect(DBCONNECT)
+        c = await db.execute(f"select count(*) as count from userss where referrer_id=?",
+                         (self.tgid,))
+        log = await c.fetchone()
+        await db.commit()
+        return 0 if log[0] is None else log[0]
+
+    async def addTrialForReferrer(self, referrer_id):
+        addTrialTime = CONFIG['count_free_from_referrer'] * 60 * 60 * 24
+        db = await aiosqlite.connect(DBCONNECT)
+        await db.execute(f"Update userss set subscription=subscription+{addTrialTime} where tgid={referrer_id}")
+        await db.commit()
