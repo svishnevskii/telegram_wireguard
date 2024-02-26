@@ -643,11 +643,11 @@ async def checkout(pre_checkout_query):
 def getCostBySale(month):
     cost = month * CONFIG['one_month_cost']
     if month == 3:
+        saleAsPersent = 6
+    elif month == 6:
         saleAsPersent = 10
-    if month == 6:
+    elif month == 12:
         saleAsPersent = 13
-    if month == 12:
-        saleAsPersent = 1
     else:
         return int(cost)
     return int(cost - (cost * saleAsPersent / 100))
