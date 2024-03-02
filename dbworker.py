@@ -100,7 +100,7 @@ class User:
     async def GetAllUsersDesc(self):
         db = await aiosqlite.connect(DBCONNECT)
         db.row_factory = sqlite3.Row
-        c = await db.execute(f"SELECT * FROM userss order by id desc limit 10")
+        c = await db.execute(f"SELECT * FROM userss order by id desc limit 50")
         log = await c.fetchall()
         await c.close()
         await db.close()

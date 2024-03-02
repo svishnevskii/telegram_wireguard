@@ -4,6 +4,7 @@ import subprocess
 from datetime import datetime
 import sqlite3
 import time
+import html
 
 import aiosqlite
 
@@ -338,16 +339,17 @@ async def Work_with_Message(m: types.Message):
             readymass = []
             readymes = ""
             for i in allusers:
+                raw = f"{html.escape(i[6])} ({i[5]}|<code>{str(i[1])}</code>) :check_mark_button:\n"
                 if int(i[2]) > int(time.time()):
-                    if len(readymes) + len(f"{i[6]} ({i[5]}|<code>{str(i[1])}</code>) :check_mark_button:\n") > 4090:
+                    if len(readymes) + len(raw) > 4090:
                         readymass.append(readymes)
                         readymes = ""
-                    readymes += f"{i[6]} ({i[5]}|<code>{str(i[1])}</code>) :check_mark_button:\n"
+                    readymes += raw
                 else:
-                    if len(readymes) + len(f"{i[6]} ({i[5]}|<code>{str(i[1])}</code>)\n") > 4090:
+                    if len(readymes) + len(raw) > 4090:
                         readymass.append(readymes)
                         readymes = ""
-                    readymes += f"{i[6]} ({i[5]}|<code>{str(i[1])}</code>)\n"
+                    readymes += raw
             readymass.append(readymes)
             for i in readymass:
                 await bot.send_message(m.from_user.id, e.emojize(i), reply_markup=await buttons.admin_buttons(),
@@ -481,13 +483,8 @@ async def Work_with_Message(m: types.Message):
         if user_dat.trial_subscription == False:
             Butt_how_to = types.InlineKeyboardMarkup()
             Butt_how_to.add(
-                types.InlineKeyboardButton(e.emojize("Подробнее как подключить"),
-                                           url="https://telegra.ph/Gajd-na-ustanovku-11-27"))
-            # Butt_how_to.add(
-            #     types.InlineKeyboardButton(e.emojize("Инструкция для Android"), url="https://telegra.ph/Gajd-na-ustanovku-WireGuard-Android-01-16"))
-            # Butt_how_to.add(
-            #     types.InlineKeyboardButton(e.emojize("Проверить VPN"),
-            #                                url="https://2ip.ru/"))
+                types.InlineKeyboardButton(e.emojize("Видеоинструкция"), callback_data="Tutorial"))
+
             config = open(f'/root/wg0-client-{str(user_dat.tgid)}.conf', 'rb')
             await bot.send_document(chat_id=m.chat.id, document=config, visible_file_name=f"{str(user_dat.tgid)}.conf",
                                     caption=texts_for_bot["how_to_connect_info"], parse_mode="HTML",
@@ -515,6 +512,11 @@ async def Referrer(call: types.CallbackQuery):
           f"Количество рефералов: {str(countReferal)} " \
           f"\n\rВаша реферальная ссылка: \n\r<code>{refLink}</code>"
 
+    await bot.send_message(chat_id=call.message.chat.id, text=msg, parse_mode='HTML')
+
+@bot.callback_query_handler(func=lambda c: 'Tutorial' in c.data)
+async def Tutorial(call: types.CallbackQuery):
+    msg = "https://youtube.com/shorts/jYwUWEb94lA?feature=share"
     await bot.send_message(chat_id=call.message.chat.id, text=msg, parse_mode='HTML')
 
 @bot.callback_query_handler(func=lambda c: 'BuyMonth:' in c.data)
