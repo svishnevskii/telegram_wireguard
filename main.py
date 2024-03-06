@@ -339,7 +339,7 @@ async def Work_with_Message(m: types.Message):
             readymass = []
             readymes = ""
             for i in allusers:
-                raw = f"{html.escape(i[6])} ({i[5]}|<code>{str(i[1])}</code>) :check_mark_button:\n"
+                raw = f"{html.escape(str(i[6]))} ({i[5]}|<code>{str(i[1])}</code>) :check_mark_button:\n"
                 if int(i[2]) > int(time.time()):
                     if len(readymes) + len(raw) > 4090:
                         readymass.append(readymes)
@@ -393,14 +393,17 @@ async def Work_with_Message(m: types.Message):
                 await bot.send_message(m.from_user.id, e.emojize("Нету пользователей с подпиской!"),
                                        reply_markup=await buttons.admin_buttons(), parse_mode="HTML")
                 return
+
             for i in allusers:
-                # print(datetime.utcfromtimestamp(int(time.time())).strftime('%d.%m.%Y %H:%M'))
+                raw = f"{html.escape(str(i[6]))} ({i[5]}|<code>{str(i[1])}</code>)"
+                dateInfo = f" активна до {datetime.utcfromtimestamp(int(i[2]) + CONFIG['UTC_time'] * 3600).strftime('%d.%m.%Y %H:%M')}\n\n"
                 if int(i[2]) > int(time.time()):
-                    if len(readymes) + len(
-                            f"{i[6]} ({i[5]}|<code>{str(i[1])}</code>) - {datetime.utcfromtimestamp(int(i[2]) + CONFIG['UTC_time'] * 3600).strftime('%d.%m.%Y %H:%M')}\n\n") > 4090:
+                    # Определяем длинну сообщения
+                    if len(readymes) + len(raw + dateInfo) > 4090:
                         readymass.append(readymes)
                         readymes = ""
-                    readymes += f"{i[6]} ({i[5]}|<code>{str(i[1])}</code>) - {datetime.utcfromtimestamp(int(i[2]) + CONFIG['UTC_time'] * 3600).strftime('%d.%m.%Y %H:%M')}\n\n"
+                    readymes += raw + dateInfo
+
             readymass.append(readymes)
             for i in readymass:
                 await bot.send_message(m.from_user.id, e.emojize(i), parse_mode="HTML")
