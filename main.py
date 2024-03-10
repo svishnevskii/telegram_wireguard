@@ -801,7 +801,7 @@ def checkTime():
                 approveLTV = 60 * 60 * 24 * int(CONFIG['trial_period'])
                 # От текущего времени вычитаем дату старта
                 expire_time = time_now - int(i[2])
-                print(expire_time, approveLTV, 'is', expire_time >= approveLTV)
+
                 if expire_time >= approveLTV and i['trial_continue'] == 0:
                     BotChecking = TeleBot(BOTAPIKEY)
                     timetoadd = approveLTV
