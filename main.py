@@ -369,19 +369,15 @@ async def Work_with_Message(m: types.Message):
             db = sqlite3.connect(DBCONNECT)
             for i in log:
                 countAdded += 1
-                db.execute(f"Update userss set subscription = ?, banned=false, notion_oneday=false where tgid=?",
-                           (str(int(time.time()) + timetoadd), i["tgid"]))
+                # db.execute(f"Update userss set subscription = ?, banned=false, notion_oneday=false where tgid=?",
+                #            (str(int(time.time()) + timetoadd), i["tgid"]))
                 db.commit()
                 db.close()
                 subprocess.call(f'./addusertovpn.sh {str(i["tgid"])}', shell=True)
 
-                Butt_main = types.ReplyKeyboardMarkup(resize_keyboard=True)
-                Butt_main.add(types.KeyboardButton(e.emojize(f"Продлить :money_bag:")),
-                              types.KeyboardButton(e.emojize(f"Рефералы :busts_in_silhouette:")))
-                Butt_main.add(types.KeyboardButton(e.emojize(f"Как подключить :gear:")))
                 BotChecking.send_message(i['tgid'],
                                          texts_for_bot["alert_to_extend_sub"],
-                                         reply_markup=Butt_main, parse_mode="HTML")
+                                         reply_markup=await main_buttons(user_dat), parse_mode="HTML")
                 BotChecking.send_message(CONFIG['admin_tg_id'],
                                          f"Добавлен пробный период {countAdded} пользователям", parse_mode="HTML")
 
@@ -447,6 +443,8 @@ async def Work_with_Message(m: types.Message):
             await bot.set_state(m.from_user.id, MyStates.AdminNewUser)
             return
 
+    if ":red_circle: Закончилась:" in e.demojize(m.text):
+        print('like')
     if e.demojize(m.text) == "Продлить :money_bag:":
         payment_info = await user_dat.PaymentInfo()
 
@@ -474,7 +472,7 @@ async def Work_with_Message(m: types.Message):
                 types.InlineKeyboardButton(e.emojize(f"12 мес. 📅 - {int(getCostBySale(12))} руб."),
                                            callback_data="BuyMonth:12"))
             Butt_payment.add(
-                types.InlineKeyboardButton(e.emojize(f"Беслатно +{CONFIG['count_free_from_referrer']} месяц за нового друга"), callback_data="Referrer"))
+                types.InlineKeyboardButton(e.emojize(f"Бесплатно +{CONFIG['count_free_from_referrer']} месяц за нового друга"), callback_data="Referrer"))
 
             # await bot.send_message(m.chat.id, "<b>Оплатить можно с помощью Банковской карты или Qiwi кошелька!</b>\n\nВыберите на сколько месяцев хотите приобрести подписку:", reply_markup=Butt_payment,parse_mode="HTML")
             await bot.send_message(m.chat.id,
@@ -673,9 +671,11 @@ async def got_payment(m):
         addTimeSubscribe,
         m.from_user.id)
 
+    await AddTimeToUser(m.from_user.id, addTimeSubscribe)
+
+    user = await User.GetInfo(m.from_user.id)
     await bot.send_message(m.from_user.id, texts_for_bot["success_pay_message"],
                            reply_markup=await buttons.main_buttons(user), parse_mode="HTML")
-    await AddTimeToUser(m.from_user.id, addTimeSubscribe)
 
     await bot.send_message(CONFIG["admin_tg_id"], f"Оплата подписки {getCostBySale(month)}р. от @{str(m.from_user.username)}", parse_mode="HTML")
 
@@ -754,7 +754,7 @@ bot.add_custom_filter(asyncio_filters.StateFilter(bot))
 def checkTime():
     while True:
         try:
-            time.sleep(15)
+            time.sleep(2)
             db = sqlite3.connect(DBCONNECT)
             db.row_factory = sqlite3.Row
             c = db.execute(f"SELECT * FROM userss")
@@ -788,26 +788,43 @@ def checkTime():
                     db.execute(f"UPDATE userss SET notion_oneday=true where tgid=?", (i[1],))
                     db.commit()
                     BotChecking = TeleBot(BOTAPIKEY)
-                    BotChecking.send_message(i['tgid'], texts_for_bot["alert_to_renew_sub"], parse_mode="HTML")
+
+                    Butt_reffer = types.InlineKeyboardMarkup()
+                    Butt_reffer.add(
+                        types.InlineKeyboardButton(
+                            e.emojize(f"Бесплатно +{CONFIG['count_free_from_referrer']} месяц за нового друга"),
+                            callback_data="Referrer"))
+                    BotChecking.send_message(i['tgid'], texts_for_bot["alert_to_renew_sub"], reply_markup=Butt_reffer, parse_mode="HTML")
 
                 # Дарим бесплатную подписку на 7 дней если он висит 7 дня как неактивный и не ливнул
                 # Не удалил и не заблокировал бот в течение 3х дней
                 approveLTV = 60 * 60 * 24 * int(CONFIG['trial_period'])
                 # От текущего времени вычитаем дату старта
                 expire_time = time_now - int(i[2])
+                print(expire_time, approveLTV, 'is', expire_time >= approveLTV)
                 if expire_time >= approveLTV and i['trial_continue'] == 0:
                     BotChecking = TeleBot(BOTAPIKEY)
                     timetoadd = approveLTV
+                    newExpireEnd = int(int(time.time()) + timetoadd)
                     db = sqlite3.connect(DBCONNECT)
                     db.execute(f"UPDATE userss SET trial_continue=1 where tgid=?", (i[1],))
                     db.execute(
                         f"Update userss set subscription = ?, banned=false, notion_oneday=false where tgid=?",
-                        (str(int(time.time()) + timetoadd), i[1]))
+                        (newExpireEnd, i[1]))
                     db.commit()
                     db.close()
                     subprocess.call(f'./addusertovpn.sh {str(i[1])}', shell=True)
-
+                    dateto = datetime.utcfromtimestamp(int(newExpireEnd) + CONFIG['UTC_time'] * 3600).strftime(
+                        '%d.%m.%Y %H:%M')
                     Butt_main = types.ReplyKeyboardMarkup(resize_keyboard=True)
+
+                    # todo: refacto to another method
+                    if newExpireEnd < time_now:
+                        Butt_main.add(
+                            types.KeyboardButton(e.emojize(f":red_circle: Закончилась: {dateto} МСК:red_circle:")))
+                    if newExpireEnd >= time_now:
+                        Butt_main.add(types.KeyboardButton(e.emojize(f":green_circle: До: {dateto} МСК:green_circle:")))
+
                     Butt_main.add(types.KeyboardButton(e.emojize(f"Продлить :money_bag:")),
                                   types.KeyboardButton(e.emojize(f"Рефералы :busts_in_silhouette:")))
                     Butt_main.add(types.KeyboardButton(e.emojize(f"Как подключить :gear:")))
