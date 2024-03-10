@@ -443,8 +443,6 @@ async def Work_with_Message(m: types.Message):
             await bot.set_state(m.from_user.id, MyStates.AdminNewUser)
             return
 
-    if ":red_circle: Закончилась:" in e.demojize(m.text):
-        print('like')
     if e.demojize(m.text) == "Продлить :money_bag:":
         payment_info = await user_dat.PaymentInfo()
 
