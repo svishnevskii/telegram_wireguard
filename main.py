@@ -572,7 +572,8 @@ async def AddTimeToUser(tgid, timetoadd):
                          (str(int(time.time()) + timetoadd), userdat.tgid))
         check = subprocess.call(f'./addusertovpn.sh {str(userdat.tgid)}', shell=True)
         await bot.send_message(userdat.tgid, e.emojize(
-            'Данные для входа были обновлены, скачайте новый файл авторизации через раздел "Как подключить :gear:"'))
+            'Данные для входа были обновлены, скачайте новый файл авторизации через раздел "Как подключить :gear:"'),
+                               reply_markup=await main_buttons(userdat))
     else:
         passdat = int(userdat.subscription) + timetoadd
         print(passdat, timetoadd)
