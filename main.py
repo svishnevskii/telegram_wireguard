@@ -571,6 +571,7 @@ async def AddTimeToUser(tgid, timetoadd):
         await db.execute(f"Update userss set subscription = ?, banned=false, notion_oneday=false where tgid=?",
                          (str(int(time.time()) + timetoadd), userdat.tgid))
         check = subprocess.call(f'./addusertovpn.sh {str(userdat.tgid)}', shell=True)
+        userdat = await User.GetInfo(tgid)
         await bot.send_message(userdat.tgid, e.emojize(
             'Данные для входа были обновлены, скачайте новый файл авторизации через раздел "Как подключить :gear:"'),
                                reply_markup=await main_buttons(userdat))
