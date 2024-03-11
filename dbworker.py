@@ -146,7 +146,7 @@ class User:
         return 0 if log[0] is None else log[0]
 
     async def addTrialForReferrer(self, referrer_id):
-        addTrialTime = CONFIG['count_free_from_referrer'] * 60 * 60 * 24
+        addTrialTime = 30 * CONFIG['count_free_from_referrer'] * 60 * 60 * 24
         db = await aiosqlite.connect(DBCONNECT)
         await db.execute(f"Update userss set subscription=subscription+{addTrialTime} where tgid={referrer_id}")
         await db.commit()
