@@ -66,7 +66,7 @@ class User:
         db = await aiosqlite.connect(DBCONNECT)
         await db.execute(
             f"INSERT INTO payments (tgid,bill_id,amount,time_to_add,mesid, created_at) values (?,?,?,?,?,?)",
-            (self.tgid, str(bill_id), summ, int(time_to_add), str(mesid), datetime.fromtimestamp(time.time())))
+            (self.tgid, bill_id, summ, int(time_to_add), str(mesid), datetime.fromtimestamp(time.time())))
         await db.commit()
 
     async def GetAllPaymentsInWork(self):
@@ -109,7 +109,7 @@ class User:
     async def GetAllUsersWithSub(self):
         db = await aiosqlite.connect(DBCONNECT)
         db.row_factory = sqlite3.Row
-        c = await db.execute(f"SELECT * FROM userss where subscription > ?", (str(int(time.time())),))
+        c = await db.execute(f"SELECT * FROM userss where subscription > ? order by id desc limit 30", (str(int(time.time())),))
         log = await c.fetchall()
         await c.close()
         await db.close()
@@ -150,3 +150,11 @@ class User:
         db = await aiosqlite.connect(DBCONNECT)
         await db.execute(f"Update userss set subscription=subscription+{addTrialTime} where tgid={referrer_id}")
         await db.commit()
+
+async def payment_already_checked(payment_id):
+    connection = sqlite3.connect(DBCONNECT)
+    cursor = connection.cursor()
+    cursor.execute('SELECT bill_id FROM payments WHERE bill_id = ?', (payment_id,))
+    result = cursor.fetchone()
+    connection.close()
+    return result is not None

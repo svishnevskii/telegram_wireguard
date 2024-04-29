@@ -20,9 +20,10 @@ import threading
 from telebot import types
 from telebot.asyncio_storage import StateMemoryStorage
 from telebot.asyncio_handler_backends import State, StatesGroup
+from payment import create, check
 
 from buttons import main_buttons
-from dbworker import User
+from dbworker import User, payment_already_checked
 
 with open("config.json", encoding="utf-8") as file_handler:
     CONFIG = json.load(file_handler)
@@ -36,11 +37,6 @@ DBCONNECT = "data.sqlite"
 BOTAPIKEY = CONFIG["tg_token"]
 
 bot = AsyncTeleBot(CONFIG["tg_token"], state_storage=StateMemoryStorage())
-
-
-# QIWI_PRIV_KEY = CONFIG["qiwi_key"]
-
-# p2p = AioQiwiP2P(auth_key=QIWI_PRIV_KEY,alt="zxcvbnm.online")
 
 
 class MyStates(StatesGroup):
@@ -73,7 +69,7 @@ async def start(message: types.Message):
             # Определяем referrer_id
             arg_referrer_id = message.text[7:]
             referrer_id = None if arg_referrer_id is None else arg_referrer_id
-            await user_dat.Adduser(username, message.from_user.full_name,referrer_id)
+            await user_dat.Adduser(username, message.from_user.full_name, referrer_id)
             # Обработка пользователей, пришедших по реферральной ссылке
             if referrer_id and referrer_id != user_dat.tgid:
                 await user_dat.addTrialForReferrer(referrer_id)
@@ -87,7 +83,6 @@ async def start(message: types.Message):
             await bot.send_message(message.chat.id, e.emojize(texts_for_bot["hello_message"]), parse_mode="HTML",
                                    reply_markup=await main_buttons(user_dat))
             await bot.send_message(message.chat.id, e.emojize(texts_for_bot["trial_message"]))
-
 
 
 @bot.message_handler(state=MyStates.editUser, content_types=["text"])
@@ -262,7 +257,6 @@ async def Work_with_Message(m: types.Message):
         return
 
     readymes = f"Пользователь: <b>{str(user_dat.fullname)}</b> ({str(user_dat.username)})\nTG-id: <code>{str(user_dat.tgid)}</code>\n\n"
-
     if int(user_dat.subscription) > int(time.time()):
         readymes += f"Подписка: до <b>{datetime.utcfromtimestamp(int(user_dat.subscription) + CONFIG['UTC_time'] * 3600).strftime('%d.%m.%Y %H:%M')}</b> :check_mark_button:"
     else:
@@ -470,13 +464,14 @@ async def Work_with_Message(m: types.Message):
                 types.InlineKeyboardButton(e.emojize(f"12 мес. 📅 - {int(getCostBySale(12))} руб."),
                                            callback_data="BuyMonth:12"))
             Butt_payment.add(
-                types.InlineKeyboardButton(e.emojize(f"Бесплатно +{CONFIG['count_free_from_referrer']} месяц за нового друга"), callback_data="Referrer"))
+                types.InlineKeyboardButton(
+                    e.emojize(f"Бесплатно +{CONFIG['count_free_from_referrer']} месяц за нового друга"),
+                    callback_data="Referrer"))
 
             # await bot.send_message(m.chat.id, "<b>Оплатить можно с помощью Банковской карты или Qiwi кошелька!</b>\n\nВыберите на сколько месяцев хотите приобрести подписку:", reply_markup=Butt_payment,parse_mode="HTML")
             await bot.send_message(m.chat.id,
-                                   "<b>Оплатить можно с помощью Банковской карты!</b>\n\nВыберите на сколько месяцев хотите приобрести VPN:",
+                                   "<b>Оплачиваейте любым удобным вам способом!</b>\n\nВыберите на сколько месяцев хотите приобрести VPN:",
                                    reply_markup=Butt_payment, parse_mode="HTML")
-
 
     if e.demojize(m.text) == "Как подключить :gear:":
         if user_dat.trial_subscription == False:
@@ -501,6 +496,7 @@ async def Work_with_Message(m: types.Message):
 
         await bot.send_message(chat_id=m.chat.id, text=msg, parse_mode='HTML')
 
+
 @bot.callback_query_handler(func=lambda c: 'Referrer' in c.data)
 async def Referrer(call: types.CallbackQuery):
     user_dat = await User.GetInfo(call.from_user.id)
@@ -513,41 +509,52 @@ async def Referrer(call: types.CallbackQuery):
 
     await bot.send_message(chat_id=call.message.chat.id, text=msg, parse_mode='HTML')
 
+
 @bot.callback_query_handler(func=lambda c: 'Tutorial' in c.data)
 async def Tutorial(call: types.CallbackQuery):
     msg = "https://youtube.com/shorts/jYwUWEb94lA?feature=share"
     await bot.send_message(chat_id=call.message.chat.id, text=msg, parse_mode='HTML')
 
+
 @bot.callback_query_handler(func=lambda c: 'BuyMonth:' in c.data)
 async def Buy_month(call: types.CallbackQuery):
     user_dat = await User.GetInfo(call.from_user.id)
-    # payment_info = await user_dat.PaymentInfo()
+    chat_id = call.message.chat.id
 
     Month_count = int(str(call.data).split(":")[1])
-    # new_bill = await p2p.bill(amount=Month_count*CONFIG['one_month_cost'], lifetime=45, theme_code=CONFIG['qiwi_theme_code'],
-    #                     comment=f"Оплата VPN на {Month_count} мес. для пользователя {call.from_user.id}")
-    # urltopay=CONFIG["url_redirect_to_pay"]+str(new_bill.pay_url)[-36:]
-    # bill_id = new_bill.bill_id
-    await bot.delete_message(call.message.chat.id, call.message.id)
-    bill = await bot.send_invoice(
-        call.message.chat.id,
-        f"Оплата VPN", f"VPN на {str(Month_count)} мес.",
-        call.data,
-        currency="RUB",
-        prices=[types.LabeledPrice(f"VPN на {str(Month_count)} мес.", getCostBySale(Month_count) * 100)],
-        provider_token=CONFIG["tg_shop_token"]
-    )
-        # await user_dat.NewPay(bill.,Month_count*CONFIG['one_month_cost'],Month_count*2592000,call.message.id)
+    await bot.delete_message(chat_id, call.message.id)
+    plans = {
+        "count_month": Month_count,
+        "price": getCostBySale(Month_count),
+        "month_count": Month_count,
+    }
+    payment_url, payment_id = create(plans, chat_id, user_dat.tgid)
 
-    # Butt_payment = types.InlineKeyboardMarkup()
-    # Butt_payment.add(
-    #     types.InlineKeyboardButton(e.emojize("Оплатить :money_bag:"), url=urltopay))
-    # Butt_payment.add(
-    #     types.InlineKeyboardButton(e.emojize("Отменить платеж :cross_mark:"), callback_data=f'Cancel:' + str(user_dat.tgid)))
-    # await bot.edit_message_text(chat_id=call.from_user.id,message_id=call.message.id,text=f"<b>Оплата: VPN на {str(Month_count)} мес.\n\nСумма оплаты: <code>{str(Month_count*CONFIG['one_month_cost'])} ₽</code></b>\nОплатите счет в течение 45 минут!",parse_mode="HTML",reply_markup=Butt_payment)
+    keyboard = [
+        [
+            types.InlineKeyboardButton('Оплатить', url=payment_url),
+            types.InlineKeyboardButton('Проверить оплату', callback_data=f"CheckPurchase:{payment_id}"),
+        ],
+    ]
+    reply_markup = types.InlineKeyboardMarkup(keyboard)
+    await bot.send_message(chat_id, text="Ссылка на оплату", reply_markup=reply_markup)
 
-    await bot.answer_callback_query(call.id)
+@bot.callback_query_handler(func=lambda c: 'CheckPurchase:' in c.data)
+async def check_handler(call: types.CallbackQuery) -> None:
+    payment_id = str(call.data).split(":")[1]
+    user = await User.GetInfo(call.from_user.id)
 
+    payment_status, payment_metadata = check(payment_id)
+    if payment_status:
+        await bot.delete_message(chat_id=call.message.chat.id, message_id=call.message.id)
+        if payment_already_checked(payment_id):
+            ## Повторно НЕ фиксируем платеж и пополяем подписку
+            await bot.send_message(call.from_user.id, "Проверка оплаты уже выполнена")
+        else:
+            ## Фиксируем платеж и пополяем подписку
+            await got_payment(call, payment_metadata)
+    else:
+        await bot.message.reply_text(f'Оплата не прошла или возникла ошибка, передайте {payment_id} в поддержку поддержка @befutureSupport')
 
 # @bot.callback_query_handler(func=lambda c: 'Cancel:' in c.data)
 # async def Cancel_payment(call: types.CallbackQuery):
@@ -592,6 +599,7 @@ async def AddTimeToUser(tgid, timetoadd):
     Butt_main.add(types.KeyboardButton(e.emojize(f"Продлить :money_bag:")),
                   types.KeyboardButton(e.emojize(f"Рефералы :busts_in_silhouette:")))
     Butt_main.add(types.KeyboardButton(e.emojize(f"Как подключить :gear:")))
+
 
 @bot.callback_query_handler(func=lambda c: 'DELETE:' in c.data or 'DELETYES:' in c.data or 'DELETNO:' in c.data)
 async def DeleteUserYesOrNo(call: types.CallbackQuery):
@@ -643,6 +651,7 @@ async def checkout(pre_checkout_query):
         await bot.answer_pre_checkout_query(pre_checkout_query.id, ok=True,
                                             error_message="Оплата не прошла, попробуйте еще раз!")
 
+
 def getCostBySale(month):
     cost = month * CONFIG['one_month_cost']
     if month == 3:
@@ -655,29 +664,29 @@ def getCostBySale(month):
         return int(cost)
     return int(cost - (cost * saleAsPersent / 100))
 
-@bot.message_handler(content_types=['successful_payment'])
-async def got_payment(m):
-    payment: types.SuccessfulPayment = m.successful_payment
-    month = int(str(payment.invoice_payload).split(":")[1])
+
+async def got_payment(m, payment_metadata):
+    month = int(payment_metadata.get("month_count"))
     user = await User.GetInfo(m.from_user.id)
-    addTimeSubscribe = month * 30 * 24 * 60 * 60;
-    print(
-        payment
-    )
+    payment_id = str(m.data).split(":")[1]
+    addTimeSubscribe = month * 30 * 24 * 60 * 60
     # save info about user
     await user.NewPay(
-        payment.provider_payment_charge_id,
+        payment_id,
         getCostBySale(month),
         addTimeSubscribe,
         m.from_user.id)
 
     await AddTimeToUser(m.from_user.id, addTimeSubscribe)
 
-    user = await User.GetInfo(m.from_user.id)
+    # Сообщение пользователю об успешной оплате
     await bot.send_message(m.from_user.id, texts_for_bot["success_pay_message"],
                            reply_markup=await buttons.main_buttons(user), parse_mode="HTML")
 
-    await bot.send_message(CONFIG["admin_tg_id"], f"Оплата подписки {getCostBySale(month)}р. от @{str(m.from_user.username)}", parse_mode="HTML")
+    # Уведомление админу
+    await bot.send_message(CONFIG["admin_tg_id"],
+                           f"Оплата подписки {getCostBySale(month)}р. от @{str(m.from_user.username)}",
+                           parse_mode="HTML")
 
 
 bot.add_custom_filter(asyncio_filters.StateFilter(bot))
@@ -749,12 +758,10 @@ bot.add_custom_filter(asyncio_filters.StateFilter(bot))
 #             pass
 
 
-
-
 def checkTime():
     while True:
         try:
-            time.sleep(15)
+            time.sleep(60 * 60)
             db = sqlite3.connect(DBCONNECT)
             db.row_factory = sqlite3.Row
             c = db.execute(f"SELECT * FROM userss")
@@ -794,7 +801,8 @@ def checkTime():
                         types.InlineKeyboardButton(
                             e.emojize(f"Бесплатно +{CONFIG['count_free_from_referrer']} месяц за нового друга"),
                             callback_data="Referrer"))
-                    BotChecking.send_message(i['tgid'], texts_for_bot["alert_to_renew_sub"], reply_markup=Butt_reffer, parse_mode="HTML")
+                    BotChecking.send_message(i['tgid'], texts_for_bot["alert_to_renew_sub"], reply_markup=Butt_reffer,
+                                             parse_mode="HTML")
 
                 # Дарим бесплатную подписку на 7 дней если он висит 7 дня как неактивный и не ливнул
                 # Не удалил и не заблокировал бот в течение 3х дней
