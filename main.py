@@ -581,7 +581,7 @@ async def AddTimeToUser(tgid, timetoadd):
         ## todo: set updste info about actual time subsription
         await bot.send_message(userdat.tgid, e.emojize(
             'Данные для входа были обновлены, скачайте новый файл авторизации через раздел "Как подключить :gear:"'),
-                               reply_markup=await main_buttons(userdat, True))
+                               parse_mode="HTML", reply_markup=await main_buttons(userdat, True))
     else:
         # Тут добавляем время в подписку тем кто имеет активную подписку
         passdat = int(userdat.subscription) + timetoadd
@@ -589,7 +589,8 @@ async def AddTimeToUser(tgid, timetoadd):
         await db.execute(f"Update userss set subscription = ?, notion_oneday=false where tgid=?",
                          (str(int(userdat.subscription) + timetoadd), userdat.tgid))
         await bot.send_message(userdat.tgid, e.emojize(
-            'Вам было добавлено время'), reply_markup=await main_buttons(userdat, True))
+            'Информация о подписке обновлена'), parse_mode="HTML", reply_markup=await main_buttons(userdat, True))
+
     await db.commit()
 
     ## todo: set updste info about actual time of subsription
