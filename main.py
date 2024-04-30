@@ -520,12 +520,13 @@ async def Tutorial(call: types.CallbackQuery):
 async def Buy_month(call: types.CallbackQuery):
     user_dat = await User.GetInfo(call.from_user.id)
     chat_id = call.message.chat.id
-
     Month_count = int(str(call.data).split(":")[1])
+    price = 1 if user_dat.tgid == CONFIG["admin_tg_id"] else getCostBySale(Month_count)
+
     await bot.delete_message(chat_id, call.message.id)
     plans = {
         "count_month": Month_count,
-        "price": getCostBySale(Month_count),
+        "price": price,
         "month_count": Month_count,
     }
     payment_url, payment_id = create(plans, chat_id, user_dat.tgid)
@@ -537,7 +538,7 @@ async def Buy_month(call: types.CallbackQuery):
         ],
     ]
     reply_markup = types.InlineKeyboardMarkup(keyboard)
-    await bot.send_message(chat_id, text="Ссылка на оплату", reply_markup=reply_markup)
+    await bot.send_message(chat_id, text="Ссылка на оплату 💸", reply_markup=reply_markup)
 
 @bot.callback_query_handler(func=lambda c: 'CheckPurchase:' in c.data)
 async def check_handler(call: types.CallbackQuery) -> None:
@@ -546,7 +547,7 @@ async def check_handler(call: types.CallbackQuery) -> None:
 
     payment_status, payment_metadata = check(payment_id)
     if payment_status:
-        await bot.delete_message(chat_id=call.message.chat.id, message_id=call.message.id)
+        # await bot.delete_message(chat_id=call.message.chat.id, message_id=call.message.id)
         if payment_already_checked(payment_id):
             ## Повторно НЕ фиксируем платеж и пополяем подписку
             await bot.send_message(call.from_user.id, "Проверка оплаты уже выполнена")
