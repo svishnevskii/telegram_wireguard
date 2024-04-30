@@ -572,32 +572,27 @@ async def AddTimeToUser(tgid, timetoadd):
     userdat = await User.GetInfo(tgid)
     db = await aiosqlite.connect(DBCONNECT)
     db.row_factory = sqlite3.Row
+    # Тут обновляем подписку тем кто давно не пользовался
     if int(userdat.subscription) < int(time.time()):
         passdat = int(time.time()) + timetoadd
         await db.execute(f"Update userss set subscription = ?, banned=false, notion_oneday=false where tgid=?",
                          (str(int(time.time()) + timetoadd), userdat.tgid))
-        check = subprocess.call(f'./addusertovpn.sh {str(userdat.tgid)}', shell=True)
-        userdat = await User.GetInfo(tgid)
+        subprocess.call(f'./addusertovpn.sh {str(userdat.tgid)}', shell=True)
+        ## todo: set updste info about actual time subsription
         await bot.send_message(userdat.tgid, e.emojize(
             'Данные для входа были обновлены, скачайте новый файл авторизации через раздел "Как подключить :gear:"'),
-                               reply_markup=await main_buttons(userdat))
+                               reply_markup=await main_buttons(userdat, True))
     else:
+        # Тут добавляем время в подписку тем кто имеет активную подписку
         passdat = int(userdat.subscription) + timetoadd
         print(passdat, timetoadd)
         await db.execute(f"Update userss set subscription = ?, notion_oneday=false where tgid=?",
                          (str(int(userdat.subscription) + timetoadd), userdat.tgid))
+        await bot.send_message(userdat.tgid, e.emojize(
+            'Вам было добавлено время'), reply_markup=await main_buttons(userdat, True))
     await db.commit()
 
-    Butt_main = types.ReplyKeyboardMarkup(resize_keyboard=True)
-    dateto = datetime.utcfromtimestamp(int(passdat) + CONFIG['UTC_time'] * 3600).strftime('%d.%m.%Y %H:%M')
-    timenow = int(time.time())
-    if int(passdat) >= timenow:
-        Butt_main.add(
-            types.KeyboardButton(e.emojize(f":green_circle: До: {dateto} МСК:green_circle:")))
-
-    Butt_main.add(types.KeyboardButton(e.emojize(f"Продлить :money_bag:")),
-                  types.KeyboardButton(e.emojize(f"Рефералы :busts_in_silhouette:")))
-    Butt_main.add(types.KeyboardButton(e.emojize(f"Как подключить :gear:")))
+    ## todo: set updste info about actual time of subsription
 
 
 @bot.callback_query_handler(func=lambda c: 'DELETE:' in c.data or 'DELETYES:' in c.data or 'DELETNO:' in c.data)

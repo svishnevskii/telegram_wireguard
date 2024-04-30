@@ -6,12 +6,16 @@ from datetime import datetime
 
 CONFIG={}
 
-async def main_buttons(user: User):
+async def main_buttons(user: User, wasUpdate = None):
+    if wasUpdate:
+        user = await User.GetInfo(user.tgid)
+
     Butt_main = types.ReplyKeyboardMarkup(resize_keyboard=True)
     if user.subscription != "none":
         dateto = datetime.utcfromtimestamp(int(user.subscription)+CONFIG["UTC_time"]*3600).strftime('%d.%m.%Y %H:%M')
         timenow = int(time.time())
-        #print(datetime.utcfromtimestamp(timenow).strftime('%Y-%m-%d %H:%M'))
+        print(user.subscription, timenow, datetime.utcfromtimestamp(timenow).strftime('%Y-%m-%d %H:%M'))
+        ## todo debug what happend?
         if int(user.subscription)<timenow:
             Butt_main.add(types.KeyboardButton(e.emojize(f":red_circle: Закончилась: {dateto} МСК:red_circle:")))
         if int(user.subscription)>=timenow:
