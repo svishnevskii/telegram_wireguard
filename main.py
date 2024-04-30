@@ -543,14 +543,12 @@ async def Buy_month(call: types.CallbackQuery):
 @bot.callback_query_handler(func=lambda c: 'CheckPurchase:' in c.data)
 async def check_handler(call: types.CallbackQuery) -> None:
     payment_id = str(call.data).split(":")[1]
-    user = await User.GetInfo(call.from_user.id)
-
     payment_status, payment_metadata = check(payment_id)
     if payment_status:
-        # await bot.delete_message(chat_id=call.message.chat.id, message_id=call.message.id)
-        if payment_already_checked(payment_id):
+        if await payment_already_checked(payment_id):
             ## Повторно НЕ фиксируем платеж и пополяем подписку
             await bot.send_message(call.from_user.id, "Проверка оплаты уже выполнена")
+            await bot.delete_message(chat_id=call.message.chat.id, message_id=call.message.id)
         else:
             ## Фиксируем платеж и пополяем подписку
             await got_payment(call, payment_metadata)
