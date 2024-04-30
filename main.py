@@ -553,7 +553,7 @@ async def check_handler(call: types.CallbackQuery) -> None:
             ## Фиксируем платеж и пополяем подписку
             await got_payment(call, payment_metadata)
     else:
-        await bot.message.reply_text(f'Оплата не прошла или возникла ошибка, передайте {payment_id} в поддержку поддержка @befutureSupport')
+        await bot.send_message(call.from_user.id, f'Оплата не прошла или возникла ошибка, сообщите {payment_id} в поддержку @befutureSupport')
 
 # @bot.callback_query_handler(func=lambda c: 'Cancel:' in c.data)
 # async def Cancel_payment(call: types.CallbackQuery):
