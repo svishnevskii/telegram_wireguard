@@ -8,7 +8,7 @@ CONFIG={}
 
 async def main_buttons(user: User, wasUpdate = None):
     if wasUpdate:
-        user = User.GetInfo(user.tgid)
+        user = await User.GetInfo(user.tgid)
 
     Butt_main = types.ReplyKeyboardMarkup(resize_keyboard=True)
     if user.subscription != "none":
