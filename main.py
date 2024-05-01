@@ -756,7 +756,7 @@ bot.add_custom_filter(asyncio_filters.StateFilter(bot))
 def checkTime():
     while True:
         try:
-            time.sleep(15)
+            time.sleep(60*10)
             db = sqlite3.connect(DBCONNECT)
             db.row_factory = sqlite3.Row
             c = db.execute(f"SELECT * FROM userss")
