@@ -15,11 +15,10 @@ async def main_buttons(user: User, wasUpdate = None):
         dateto = datetime.utcfromtimestamp(int(user.subscription)+CONFIG["UTC_time"]*3600).strftime('%d.%m.%Y %H:%M')
         timenow = int(time.time())
         print(user.subscription, timenow, datetime.utcfromtimestamp(timenow).strftime('%Y-%m-%d %H:%M'))
-        ## todo debug what happend?
         if int(user.subscription)<timenow:
             Butt_main.add(types.KeyboardButton(e.emojize(f":red_circle: Закончилась: {dateto} МСК:red_circle:")))
         if int(user.subscription)>=timenow:
-            Butt_main.add(types.KeyboardButton(e.emojize(f":green_circle: До: {dateto} МСК:green_circle:")))
+            Butt_main.add(types.KeyboardButton(e.emojize(f":green_circle: Активен до: {dateto} МСК:green_circle:")))
 
         Butt_main.add(types.KeyboardButton(e.emojize(f"Продлить :money_bag:")),
                       types.KeyboardButton(e.emojize(f"Рефералы :busts_in_silhouette:")))

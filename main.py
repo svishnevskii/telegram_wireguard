@@ -350,6 +350,7 @@ async def Work_with_Message(m: types.Message):
                                        parse_mode="HTML")
             return
 
+        # Только для тех кто в бане как не активный с завершенной подпиской
         if e.demojize(m.text) == "Продлить пробный период":
             db = sqlite3.connect(DBCONNECT)
             db.row_factory = sqlite3.Row
@@ -363,8 +364,8 @@ async def Work_with_Message(m: types.Message):
             db = sqlite3.connect(DBCONNECT)
             for i in log:
                 countAdded += 1
-                # db.execute(f"Update userss set subscription = ?, banned=false, notion_oneday=false where tgid=?",
-                #            (str(int(time.time()) + timetoadd), i["tgid"]))
+                db.execute(f"Update userss set subscription = ?, banned=false, notion_oneday=false where tgid=?",
+                           (str(int(time.time()) + timetoadd), i["tgid"]))
                 db.commit()
                 db.close()
                 subprocess.call(f'./addusertovpn.sh {str(i["tgid"])}', shell=True)
@@ -553,7 +554,7 @@ async def check_handler(call: types.CallbackQuery) -> None:
             ## Фиксируем платеж и пополяем подписку
             await got_payment(call, payment_metadata)
     else:
-        await bot.send_message(call.from_user.id, f'Оплата не прошла или возникла ошибка, сообщите {payment_id} в поддержку @befutureSupport')
+        await bot.send_message(call.from_user.id, f"Повторите действие через 3 минуты. Оплата пока не прошла или возникла ошибка, поддержка @befutureSupport")
 
 # @bot.callback_query_handler(func=lambda c: 'Cancel:' in c.data)
 # async def Cancel_payment(call: types.CallbackQuery):
@@ -578,7 +579,6 @@ async def AddTimeToUser(tgid, timetoadd):
         await db.execute(f"Update userss set subscription = ?, banned=false, notion_oneday=false where tgid=?",
                          (str(int(time.time()) + timetoadd), userdat.tgid))
         subprocess.call(f'./addusertovpn.sh {str(userdat.tgid)}', shell=True)
-        ## todo: set updste info about actual time subsription
         await bot.send_message(userdat.tgid, e.emojize(
             'Данные для входа были обновлены, скачайте новый файл авторизации через раздел "Как подключить :gear:"'),
                                parse_mode="HTML", reply_markup=await main_buttons(userdat, True))
@@ -621,7 +621,7 @@ async def DeleteUserYesOrNo(call: types.CallbackQuery):
         await db.execute(f"delete from static_profiles where id=?", (int(idstatic),))
         await db.commit()
         await bot.delete_message(call.message.chat.id, call.message.id)
-        check = subprocess.call(f'./deleteuserfromvpn.sh {str(staticuser[1])}', shell=True)
+        subprocess.call(f'./deleteuserfromvpn.sh {str(staticuser[1])}', shell=True)
         await bot.answer_callback_query(call.id, "Пользователь удален!")
         return
     if "DELETNO:" in call.data:
@@ -676,7 +676,7 @@ async def got_payment(m, payment_metadata):
 
     # Сообщение пользователю об успешной оплате
     await bot.send_message(m.from_user.id, texts_for_bot["success_pay_message"],
-                           reply_markup=await buttons.main_buttons(user), parse_mode="HTML")
+                           reply_markup=await main_buttons(user, True), parse_mode="HTML")
 
     # Уведомление админу
     await bot.send_message(CONFIG["admin_tg_id"],
@@ -756,7 +756,7 @@ bot.add_custom_filter(asyncio_filters.StateFilter(bot))
 def checkTime():
     while True:
         try:
-            time.sleep(60 * 60)
+            time.sleep(15)
             db = sqlite3.connect(DBCONNECT)
             db.row_factory = sqlite3.Row
             c = db.execute(f"SELECT * FROM userss")
@@ -781,6 +781,7 @@ def checkTime():
                                   types.KeyboardButton(e.emojize(f"Рефералы :busts_in_silhouette:")))
                     Butt_main.add(types.KeyboardButton(e.emojize(f"Как подключить :gear:")))
                     BotChecking = TeleBot(BOTAPIKEY)
+                    # Notify Subscription is done
                     BotChecking.send_message(i['tgid'],
                                              texts_for_bot["ended_sub_message"],
                                              reply_markup=Butt_main, parse_mode="HTML")
