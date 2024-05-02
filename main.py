@@ -372,7 +372,7 @@ async def Work_with_Message(m: types.Message):
 
                 BotChecking.send_message(i['tgid'],
                                          texts_for_bot["alert_to_extend_sub"],
-                                         reply_markup=await main_buttons(user_dat), parse_mode="HTML")
+                                         reply_markup=await main_buttons(user_dat, True), parse_mode="HTML")
                 BotChecking.send_message(CONFIG['admin_tg_id'],
                                          f"Добавлен пробный период {countAdded} пользователям", parse_mode="HTML")
 
