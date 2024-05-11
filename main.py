@@ -75,9 +75,10 @@ async def start(message: types.Message):
                 await user_dat.addTrialForReferrer(referrer_id)
                 # Начислим бесплатный период рефереру
                 # Пользователь пришел по реферральной ссылке, обрабатываем это
+                referrerUser = await User.GetInfo(referrer_id)
                 await bot.send_message(message.chat.id, f"Вы пришли по реферральной ссылке с кодом {referrer_id}")
                 await bot.send_message(referrer_id,
-                                       f"Вам начислен +{CONFIG['count_free_from_referrer']} месяц за нового пользователя")
+                                       f"Вам начислен +{CONFIG['count_free_from_referrer']} месяц за нового пользователя", reply_markup=await main_buttons(referrerUser))
 
             user_dat = await User.GetInfo(message.chat.id)
             await bot.send_message(message.chat.id, e.emojize(texts_for_bot["hello_message"]), parse_mode="HTML",
