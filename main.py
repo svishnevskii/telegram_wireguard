@@ -5,6 +5,7 @@ from datetime import datetime
 import sqlite3
 import time
 import html
+import os
 
 import aiosqlite
 
@@ -70,16 +71,22 @@ async def start(message: types.Message):
             arg_referrer_id = message.text[7:]
             referrer_id = None if arg_referrer_id is None else arg_referrer_id
             await user_dat.Adduser(username, message.from_user.full_name, referrer_id)
-            # Обработка пользователей, пришедших по реферральной ссылке
+            # Обработка реферера
             if referrer_id and referrer_id != user_dat.tgid:
+                # Начислим +бесплатный период рефереру
                 await user_dat.addTrialForReferrer(referrer_id)
-                # Начислим бесплатный период рефереру
-                # Пользователь пришел по реферральной ссылке, обрабатываем это
+                ## Если время подписки истекло, а только после было добавлено рефереру, нужно создавать wg0 конфиг
+                if not (os.path.exists(f'/root/wg0-client-{str(referrer_id)}.conf')):
+                    subprocess.call(f'./addusertovpn.sh {str(referrer_id)}', shell=True)
+                    # Информируем что конфиг подключения обновлен
+                    await bot.send_message(referrer_id, e.emojize(texts_for_bot["alert_to_update_wg_config"]))
+
+                # Пользователь пришел по реферальной ссылке, обрабатываем это
                 referrerUser = await User.GetInfo(referrer_id)
-                await bot.send_message(message.chat.id, f"Вы пришли по реферральной ссылке с кодом {referrer_id}")
                 await bot.send_message(referrer_id,
                                        f"Вам начислен +{CONFIG['count_free_from_referrer']} месяц за нового пользователя", reply_markup=await main_buttons(referrerUser))
 
+            # Приветствуем нового пользователя (реферала)
             user_dat = await User.GetInfo(message.chat.id)
             await bot.send_message(message.chat.id, e.emojize(texts_for_bot["hello_message"]), parse_mode="HTML",
                                    reply_markup=await main_buttons(user_dat))

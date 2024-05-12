@@ -148,8 +148,11 @@ class User:
     async def addTrialForReferrer(self, referrer_id):
         addTrialTime = 30 * CONFIG['count_free_from_referrer'] * 60 * 60 * 24
         db = await aiosqlite.connect(DBCONNECT)
-        await db.execute(f"Update userss set subscription=subscription+{addTrialTime} where tgid={referrer_id}")
+        ## Обнулять поля banned, trial_continue, notion_oneday
+        await db.execute(f"Update userss set subscription=subscription+{addTrialTime}, banned=false, trial_continue=false, notion_oneday=false where tgid={referrer_id}")
         await db.commit()
+
+
 
 async def payment_already_checked(payment_id):
     connection = sqlite3.connect(DBCONNECT)
