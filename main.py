@@ -75,11 +75,11 @@ async def start(message: types.Message):
             if referrer_id and referrer_id != user_dat.tgid:
                 # Начислим +бесплатный период рефереру
                 await user_dat.addTrialForReferrer(referrer_id)
-                ## Если время подписки истекло, а только после было добавлено рефереру, нужно создавать wg0 конфиг
-                # if not os.path.exists(f'/root/wg0-client-{str(referrer_id)}.conf'):
-                #     subprocess.call(f'./addusertovpn.sh {str(referrer_id)}', shell=True)
-                #     # Информируем что конфиг подключения обновлен
-                #     await bot.send_message(referrer_id, e.emojize(texts_for_bot["alert_to_update_wg_config"]))
+                # Если время подписки истекло, а только после было добавлено рефереру, нужно создавать wg0 конфиг
+                if not os.path.exists(f'/root/wg0-client-{str(referrer_id)}.conf'):
+                    subprocess.call(f'./addusertovpn.sh {str(referrer_id)}', shell=True)
+                    # Информируем что конфиг подключения обновлен
+                    await bot.send_message(referrer_id, e.emojize(texts_for_bot["alert_to_update_wg_config"]))
 
                 # Пользователь пришел по реферальной ссылке, обрабатываем это
                 referrerUser = await User.GetInfo(referrer_id)
