@@ -490,7 +490,11 @@ async def Work_with_Message(m: types.Message):
             Butt_how_to.add(
                 types.InlineKeyboardButton(e.emojize("Видеоинструкция"), callback_data="Tutorial"))
 
+            if os.path.exists(f'/root/wg0-client-{str(user_dat.tgid)}.conf'):
+                subprocess.call(f'./addusertovpn.sh {str(user_dat.tgid)}', shell=True)
+
             config = open(f'/root/wg0-client-{str(user_dat.tgid)}.conf', 'rb')
+
             await bot.send_document(chat_id=m.chat.id, document=config, visible_file_name=f"{str(user_dat.tgid)}.conf",
                                     caption=texts_for_bot["how_to_connect_info"], parse_mode="HTML",
                                     reply_markup=Butt_how_to)
