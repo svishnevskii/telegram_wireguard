@@ -78,7 +78,7 @@ async def start(message: types.Message):
                 # Пользователь пришел по реферальной ссылке, обрабатываем это
                 referrerUser = await User.GetInfo(referrer_id)
                 await bot.send_message(referrer_id,
-                                       f"Вам начислен +{CONFIG['count_free_from_referrer']} месяц за нового пользователя",
+                                       f"Вам начисленo +{CONFIG['count_free_from_referrer']} дня за нового пользователя",
                                        reply_markup=await main_buttons(referrerUser))
 
                 # Если время подписки истекло, а только после было добавлено рефереру, нужно создавать wg0 конфиг
@@ -86,7 +86,6 @@ async def start(message: types.Message):
                     subprocess.call(f'./addusertovpn.sh {str(referrer_id)}', shell=True)
                     # Информируем что конфиг подключения обновлен
                     await bot.send_message(referrer_id, e.emojize(texts_for_bot["alert_to_update_wg_config"]))
-
 
             # Приветствуем нового пользователя (реферала)
             user_dat = await User.GetInfo(message.chat.id)
@@ -369,7 +368,7 @@ async def Work_with_Message(m: types.Message):
             c.close()
             db.close()
             BotChecking = TeleBot(BOTAPIKEY)
-            timetoadd = 7 * 60 * 60 * 24
+            timetoadd = 1 * 60 * 60 * 24
             countAdded = 0
             db = sqlite3.connect(DBCONNECT)
             for i in log:
@@ -476,7 +475,7 @@ async def Work_with_Message(m: types.Message):
                                            callback_data="BuyMonth:12"))
             Butt_payment.add(
                 types.InlineKeyboardButton(
-                    e.emojize(f"Бесплатно +{CONFIG['count_free_from_referrer']} месяц за нового друга"),
+                    e.emojize(f"Бесплатно +{CONFIG['count_free_from_referrer']} дня за нового друга"),
                     callback_data="Referrer"))
 
             # await bot.send_message(m.chat.id, "<b>Оплатить можно с помощью Банковской карты или Qiwi кошелька!</b>\n\nВыберите на сколько месяцев хотите приобрести подписку:", reply_markup=Butt_payment,parse_mode="HTML")
@@ -490,11 +489,12 @@ async def Work_with_Message(m: types.Message):
             Butt_how_to.add(
                 types.InlineKeyboardButton(e.emojize("Видеоинструкция"), callback_data="Tutorial"))
 
-            if os.path.exists(f'/root/wg0-client-{str(user_dat.tgid)}.conf'):
+            if not os.path.exists(f'/root/wg0-client-{str(user_dat.tgid)}.conf'):
                 subprocess.call(f'./addusertovpn.sh {str(user_dat.tgid)}', shell=True)
 
             config = open(f'/root/wg0-client-{str(user_dat.tgid)}.conf', 'rb')
 
+            # config = open(f'/root/wg0-client-{str(user_dat.tgid)}.conf', 'rb')
             await bot.send_document(chat_id=m.chat.id, document=config, visible_file_name=f"{str(user_dat.tgid)}.conf",
                                     caption=texts_for_bot["how_to_connect_info"], parse_mode="HTML",
                                     reply_markup=Butt_how_to)
@@ -555,6 +555,7 @@ async def Buy_month(call: types.CallbackQuery):
     reply_markup = types.InlineKeyboardMarkup(keyboard)
     await bot.send_message(chat_id, text="Ссылка на оплату 💸", reply_markup=reply_markup)
 
+
 @bot.callback_query_handler(func=lambda c: 'CheckPurchase:' in c.data)
 async def check_handler(call: types.CallbackQuery) -> None:
     payment_id = str(call.data).split(":")[1]
@@ -568,7 +569,9 @@ async def check_handler(call: types.CallbackQuery) -> None:
             ## Фиксируем платеж и пополяем подписку
             await got_payment(call, payment_metadata)
     else:
-        await bot.send_message(call.from_user.id, f"Повторите действие через 3 минуты. Оплата пока не прошла или возникла ошибка, поддержка @befutureSupport")
+        await bot.send_message(call.from_user.id,
+                               f"Повторите действие через 3 минуты. Оплата пока не прошла или возникла ошибка, поддержка @befutureSupport")
+
 
 # @bot.callback_query_handler(func=lambda c: 'Cancel:' in c.data)
 # async def Cancel_payment(call: types.CallbackQuery):
@@ -770,7 +773,7 @@ bot.add_custom_filter(asyncio_filters.StateFilter(bot))
 def checkTime():
     while True:
         try:
-            time.sleep(60*10)
+            time.sleep(15)
             db = sqlite3.connect(DBCONNECT)
             db.row_factory = sqlite3.Row
             c = db.execute(f"SELECT * FROM userss")
@@ -809,7 +812,7 @@ def checkTime():
                     Butt_reffer = types.InlineKeyboardMarkup()
                     Butt_reffer.add(
                         types.InlineKeyboardButton(
-                            e.emojize(f"Бесплатно +{CONFIG['count_free_from_referrer']} месяц за нового друга"),
+                            e.emojize(f"Бесплатно +{CONFIG['count_free_from_referrer']} дня за нового друга"),
                             callback_data="Referrer"))
                     BotChecking.send_message(i['tgid'], texts_for_bot["alert_to_renew_sub"], reply_markup=Butt_reffer,
                                              parse_mode="HTML")
